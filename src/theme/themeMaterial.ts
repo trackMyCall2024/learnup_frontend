@@ -29,22 +29,22 @@ declare module "@mui/material/styles" {
 export let themeMui = createTheme({
     palette: {
         primary: {
-            "50": "#e4f5ef",
-            "100": "#bde4d6",
-            "200": "#91d2bb",
-            "300": "#65c0a0",
-            "400": "#43b189",
-            "500": "#247561",
-            "600": "#206851",
-            "700": "#1a5744",
-            "800": "#154637",
-            "900": "#0c2a21",
-            light: "#e4f5ef",
-            main: "#247561",
+            "50":  "#f7f7f7", // très clair
+            "100": "#ededed",
+            "200": "#e3e3e3",
+            "300": "#d9d9d9",
+            "400": "#d6d6d6",
+            "500": "#D4D4D4", // base
+            "600": "#a9a9a9",
+            "700": "#7e7e7e",
+            "800": "#535353",
+            "900": "#2b2b2b",
+            light: "#f7f7f7",
+            main: "#D4D4D4",
         },
         text: {
-            primary: "#4F4F4F",
-            secondary: "#858b94",
+            primary: "#111111",
+            secondary: "#111111",
         },
         // info: {
         //     main: "#4270A7",
@@ -60,18 +60,35 @@ export let themeMui = createTheme({
         //     contrastText: "#fff",
         // },
         grey: {
-            200: "#EBEBEB",
+            "50": "#FAFAFA",
+            "100": "#F5F5F5",
+            "200": "#EBEBEB",
+            "300": "#CCCCCC", // ← ton gris clair
+            "400": "#AAAAAA", // ← ton gris moyen
+            "500": "#888888",
+            "600": "#535353",
+            "700": "#313131", // ← ton gris foncé
+            "800": "#1f1f1f",
+            "900": "#171717", // ← ton gris très foncé
         },
         background: {
-            default: "#fff",
-            paper: "#fff",
+            default: "#111111",
+            paper: "#FEFEFE",
         },
     },
     typography: {
         body1: {
             fontSize: "14px",
+            color: "#111111",
         },
     },
     components: {
+        MuiTypography: {
+            styleOverrides: {
+                root: {
+
+                },
+            },
+        }
     },
 });
