@@ -1,35 +1,68 @@
-import { Box, List, ListItem, ListItemButton, ListItemIcon, Stack } from "@mui/material";
-import SearchIcon from "@mui/icons-material/Search";
+import { Box, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Stack, Typography } from "@mui/material";
 import React from "react";
 import { Link } from "react-router-dom";
+import { faGraduationCap } from '@fortawesome/free-solid-svg-icons';
+import { faBook } from '@fortawesome/free-solid-svg-icons';
+import { faUser } from '@fortawesome/free-solid-svg-icons';
+import { faUsers } from '@fortawesome/free-solid-svg-icons';
+import { faGear } from '@fortawesome/free-solid-svg-icons';
+import { faBan } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { useDispatch, useSelector } from "react-redux";
+import { GlobalState, setPage } from "../../store/global";
+import { globalSelector, State, userSelector } from "../../store/selector";
+import { UserState } from "../../store/user";
+import Ellipsis from "../atoms/Ellipsis";
 
 const Navbar = () => {
-    const [listItemIndex, setListItemIndex] = React.useState<number>(0);
+    const dispatch = useDispatch();
+    const global = useSelector<State, GlobalState>(globalSelector);
+    const user = useSelector<State, UserState>(userSelector);
+    const name = `${user.firstname} ${user.lastname}`;
 
     return (
         <Stack
             height={"100vh"}
+            minWidth={"280px"}
             flexDirection={"column"}
             alignItems={"center"}
-            sx={{ backgroundColor: (theme) => theme.palette.background.paper }}
+            sx={{ backgroundColor: (theme) => theme.palette.background.default }}
         >
             <Box
-                height={50}
-                width={"auto"}
-                my={7}
-                sx={{ backgroundColor: (th) => th.palette.primary.light, borderRadius: 5 }}
+                sx={{
+                    height: 60,
+                    maxWidth: "75%",
+                    my: 4,
+                    px: 2,
+                    backgroundColor: "#1D1D1D",
+                    borderRadius: 2,
+                    border: (th) => `1px solid ${th.palette.grey['700']}`,
+                    gap: 2,
+                    display: "flex",
+                    flexDirection: "row",
+                    alignItems: "center",
+                }}
             >
-                <img
-                    draggable={false}
-                    src={`${process.env.PUBLIC_URL}/logo/logo3.svg`}
-                    alt="phone logo navbar"
-                    loading="lazy"
-                />
+                <Stack 
+                    minHeight={35} 
+                    minWidth={35}
+                    borderRadius={'50%'}
+                    display={'flex'}
+                    alignItems={'center'}
+                    justifyContent={'center'}
+                    sx={{ backgroundColor: (th) => th.palette.primary['300']}}
+                >
+                    {user.firstname?.[0] ?? ''}
+                </Stack>
+                <Stack maxWidth={'inherit'} display={'flex'} flexDirection={'column'} sx={{ color: (th) => th.palette.background.paper }}>
+                    <Ellipsis title={name}>{name}</Ellipsis>
+                    <Ellipsis title={user.email} fontSize={'12px'} sx={{ textDecoration: 'underline' }}>{user.email}</Ellipsis>
+                </Stack>
             </Box>
             <List
                 sx={{
-                    borderRadius: "50%",
-                    width: "60px",
+                    borderRadius: 10,
+                    width: "85%",
                     display: "flex",
                     flexDirection: "column",
                     justifyContent: "center",
@@ -41,38 +74,47 @@ const Navbar = () => {
                             key={i}
                             sx={{
                                 mb: 2,
-                                backgroundColor: (th) => (listItemIndex === i ? th.palette.primary.light : "none"),
                                 borderRadius: 2,
-                                // borderLeft: (th) =>
-                                //     `5px solid ${
-                                //         listItemIndex === i ? th.palette.primary.main : th.palette.background.paper
-                                //     }`,
-                                ":hover": {
-                                    backgroundColor: "#E5F9F2",
-                                    "& *": { color: (th) => th.palette.primary.main },
-                                },
-                                maxWidth: "5",
                                 display: "flex",
                                 justifyContent: "center",
                             }}
                             disablePadding
-                            onClick={() => setListItemIndex(i)}
+                            onClick={() => dispatch(setPage({ title: item.text, index: i }))}
                         >
                             <ListItemButton
                                 component={Link}
                                 to={item.link}
                                 sx={{
+                                    backgroundColor: (th) => (global.page.index === i ? "#1D1D1D" : "#111111"),
                                     borderRadius: 2,
+                                    py: 1.5,
+                                    ":hover": {
+                                        backgroundColor: "#171717",
+                                    },
+                                    gap: 2
                                 }}
                             >
-                                <ListItemIcon
-                                    sx={{
-                                        color: (th) =>
-                                            listItemIndex === i ? th.palette.primary.main : th.palette.text.secondary,
+                                <ListItemIcon 
+                                    sx={{ 
+                                        color: (th) => th.palette.grey['300'], 
+                                        height: 20, 
+                                        display: 'flex', 
+                                        alignItems: 'center', 
+                                        justifyContent: 'flex-start', 
+                                        minWidth: '0' 
                                     }}
                                 >
                                     {item.icon}
                                 </ListItemIcon>
+                                <ListItemText 
+                                    sx={{
+                                        '& .MuiTypography-root': {
+                                            color: (th) => th.palette.grey[300],
+                                        },
+                                    }}
+                                >
+                                    {item.text}
+                                </ListItemText>
                             </ListItemButton>
                         </ListItem>
                     );
@@ -83,7 +125,12 @@ const Navbar = () => {
 };
 
 const navList = [
-    { text: "Test", icon: <SearchIcon />, link: "/test" },
+    { text: "Dashboard", link: "/dashboard", icon: <FontAwesomeIcon icon={faGraduationCap} style={{ stroke: "#CCCCCC", strokeWidth: 20, color: "transparent" }} /> },
+    { text: "Courses", link: "/courses", icon: <FontAwesomeIcon icon={faBook} style={{ stroke: "#CCCCCC", strokeWidth: 20, color: "transparent" }} /> },
+    { text: "Social",  link: "/social", icon: <FontAwesomeIcon icon={faUsers} style={{ stroke: "#CCCCCC", strokeWidth: 20, color: "transparent" }} /> },
+    { text: "Profile", link: "/profile", icon: <FontAwesomeIcon icon={faUser} style={{ stroke: "#CCCCCC", strokeWidth: 20, color: "transparent" }} /> },
+    { text: "Blocker", link: "/blocker", icon: <FontAwesomeIcon icon={faBan} style={{ stroke: "#CCCCCC", strokeWidth: 20, color: "transparent" }} /> },
+    { text: "Settings", link: "/settings", icon: <FontAwesomeIcon icon={faGear} style={{ stroke: "#CCCCCC", strokeWidth: 20, color: "transparent" }} /> },
 ];
 
 export default Navbar;

@@ -1,16 +1,19 @@
-import { Stack } from "@mui/material";
+import { Box, Stack } from "@mui/material";
 import Navbar from "./components/Layout/Navbar";
 import { Outlet } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getUser, setAuthToken } from "./protocol/api";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useAuth0, User as UserAuth0 } from "@auth0/auth0-react";
 import { useEffect, useState } from "react";
 import { LoadingPage } from "./AppRouter";
 import { setUser } from "./store/user";
+import { H1 } from "./components/atoms/Typography";
+import { globalSelector, State } from "./store/selector";
+import { GlobalState } from "./store/global";
 
 function App() {
-    const dispatch = useDispatch();
+    const global = useSelector<State, GlobalState>(globalSelector);
 
     const { isAuthenticated, isLoading, user, loginWithRedirect, getAccessTokenSilently } = useAuth0();
     const [userIsValid, setUserIsValid] = useState(false);
@@ -55,24 +58,39 @@ function App() {
                     id="container"
                     flexDirection={"column"}
                     flex={1}
-                    sx={{
-                        backgroundColor: "grey.200",
-                        padding: "35px",
-                        overflow: "auto",
-                    }}
+                    overflow={'auto'}
                 >
                     <Stack
                         flexDirection={"column"}
                         sx={{
                             flex: 1,
                             backgroundColor: (th) => th.palette.background.paper,
-                            padding: "50px 50px 25px 50px",
-                            borderRadius: 2,
-                            boxShadow: "rgba(0, 0, 0, 0.05) 0px 5px 15px",
                             maxHeight: "-webkit-fill-available",
                         }}
                     >
-                        <Outlet />
+                        <Stack 
+                            maxWidth={'100%'} 
+                            sx={{
+                                padding: "10px 30px",
+                                borderBottom: (th) => `0.5px solid ${th.palette.grey['400']}`
+                            }}
+                            display={'flex'}
+                            flexDirection={'row'}
+                            justifyContent={"space-between"}
+                            alignItems={'center'}
+                        >
+                            <H1>{global.page.title}</H1>
+                            <Box height={75} width={75}>
+                                <img src="logo/logo.JPG" height={'100%'} draggable={false} />
+                            </Box>
+                        </Stack>
+                        <Stack 
+                            sx={{
+                                padding: "30px",
+                            }}
+                        >
+                            <Outlet />
+                        </Stack>
                     </Stack>
                 </Stack>
             </Stack>
