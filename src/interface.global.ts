@@ -1,8 +1,11 @@
 export enum Page {
-    Dashboard = 'Dashboard',
-    Courses = 'Courses',
-    Social = 'Social',
-    Profile = 'Profile',
-    Blocker = 'Blocker',
-    Settings = 'Settings',
+    Dashboard = 'dashboard',
+    Courses = 'courses',
+    Social = 'social',
+    Profile = 'profile',
+    Blocker = 'blocker',
+    Settings = 'settings',
+    Chapters = 'chapters',
+    Sections = 'sections',
+    Section = 'section',
 }

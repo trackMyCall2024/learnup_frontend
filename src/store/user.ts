@@ -28,6 +28,7 @@ export interface Location {
 }
 
 export interface UserState {
+    _id: string;
     email: string;
     firstname: string;
     lastname: string;
@@ -39,6 +40,7 @@ export interface UserState {
 }
 
 const initialState: UserState = {
+    _id: '684bee907d050341b200b5fa',
     email: 'feltenezechiel1@gmail.com',
     firstname: 'Ezechiel',
     lastname: 'Felten',

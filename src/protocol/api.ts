@@ -1,37 +1,38 @@
-import axios from "axios";
-import { Auth0Client, User } from "@auth0/auth0-spa-js";
+import axios from 'axios';
+import { Auth0Client, User } from '@auth0/auth0-spa-js';
+import { Row } from '../Page/Course/interface.directory';
 
 const auth0 = new Auth0Client({
     domain: 'dev-gied5dxzv0v4e4pa.us.auth0.com',
-    clientId:'djaxQ10FCMs03JQeqxqMsDG04iquX54k',
-    cacheLocation: "localstorage",
-    useRefreshTokens: true
+    clientId: 'djaxQ10FCMs03JQeqxqMsDG04iquX54k',
+    cacheLocation: 'localstorage',
+    useRefreshTokens: true,
 });
 
 const api = axios.create({
-    baseURL: process.env.URL_BACKEND || "http://localhost:3000",
+    baseURL: process.env.URL_BACKEND || 'http://localhost:3000',
     timeout: 10000,
     headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
     },
 });
 
 api.interceptors.response.use(
-    response => response,
-    error => {
+    (response) => response,
+    (error) => {
         // Si le token est expiré ou invalide (401 ou 403)
         if (error.response && [401, 403].includes(error.response.status)) {
             console.debug('⚠️ Token invalide ou expiré');
             // return logout();
-            auth0.logout({ 
+            auth0.logout({
                 logoutParams: {
-                    returnTo: window.location.origin
-                }
-            })
+                    returnTo: window.location.origin,
+                },
+            });
         }
 
         return error;
-    }
+    },
 );
 
 export function setAuthToken(token: string) {
@@ -43,6 +44,27 @@ export function setAuthToken(token: string) {
 }
 
 export const getUser = async (user: User) => {
-    const res: any = await api.post(`get_user`, user);
+    const res = await api.post(`get_user`, user);
     return res.data;
-}
+};
+
+export const getRows = async (controller: string, filterId: string, filterSearch: string) => {
+    const res = await api.get(`${controller}/${filterId}?search=${filterSearch}`);
+    return res.data;
+};
+
+export const getHistory = async (historyType: string, filterId: string) => {
+    const res = await api.get<Row[]>(`history/${filterId}?history_type=${historyType}`);
+    return res.data;
+};
+
+export const putHistory = async (historyType: string, historyId: string, filterId: string) => {
+    console.log('@@put try', { historyId, historyType });
+
+    const res = await api.put<any>(`history/${filterId}`, {
+        history_type: historyType,
+        history_id: historyId,
+    });
+
+    return res.data;
+};

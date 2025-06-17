@@ -89,6 +89,15 @@ export let themeMui = createTheme({
 
                 },
             },
+        },
+        MuiInput: {
+            styleOverrides: {
+                root: ({ theme }) => ({
+                    border: `1px solid ${theme.palette.primary['500']}`,
+                    borderRadius: 2,
+                    padding: 2,
+                }),
+            },
         }
     },
 });
