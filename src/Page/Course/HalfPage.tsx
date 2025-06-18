@@ -1,6 +1,6 @@
 import { Stack } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
-import { GlobalState, setCurrentPage, setNextPage } from '../../store/global';
+import { GlobalState, setNextPage } from '../../store/global';
 import gsap from 'gsap';
 import { useNavigate } from 'react-router-dom';
 import { Page } from '../../interface.global';
@@ -8,9 +8,10 @@ import { directorySelector, globalSelector, State, userSelector } from '../../st
 import Directory from './Directory';
 import Header from '../../components/Layout/Header';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { DirectoryState } from '../../store/directory';
+import { CurrentItemId, DirectoryState, setCurrentItem } from '../../store/directory';
 import { putHistory } from '../../protocol/api';
 import { UserState } from '../../store/user';
+import { usePage } from '../../hooks/usePage';
 
 export function slideHalfPageToLeft() {
     gsap.to('#halfPage', {
@@ -29,13 +30,11 @@ const HalfPage = () => {
     const history = directory.history.current;
 
     const queryClient = useQueryClient();
+    const { handleGoToNext } = usePage();
 
     const handlePutHistory = useMutation({
         mutationFn: () =>
             putHistory(history?.type as string, history?.data._id as string, user._id),
-        onSettled: () => {
-            queryClient.invalidateQueries({ queryKey: ['getHistory', global.page.next._id] });
-        },
     });
 
     function slideHalfPageToRight() {
@@ -47,6 +46,12 @@ const HalfPage = () => {
             },
         });
     }
+
+    const onEnd = () => {
+        const nextPage = `${global.page.next.title}` as Page;
+        navigate(`${nextPage}/${global.page.next._id}`);
+        handlePutHistory.mutate();
+    };
 
     return (
         <Stack
@@ -74,13 +79,7 @@ const HalfPage = () => {
                     borderLeft: (theme) => `1px solid ${theme.palette.primary[500]}`,
                     backgroundColor: (th) => th.palette.background.paper,
                 }}
-                onClick={() => {
-                    const nextPage = global.page.next.title as Page;
-                    dispatch(setNextPage({ _id: '', title: null, isOpen: false }));
-                    dispatch(setCurrentPage({ title: nextPage }));
-                    navigate(`${nextPage}/${global.page.next._id}`);
-                    handlePutHistory.mutate();
-                }}
+                onClick={() => handleGoToNext(onEnd)}
             >
                 <Directory
                     halfPageIsOpen={true}

@@ -51,5 +51,49 @@ export const themeJoy = extendTheme({
                 }),
             },
         },
+        JoyTextarea: {
+            styleOverrides: {
+                root: {
+                    border: 'none',
+                    outline: 'none',
+                    boxShadow: 'none',
+                    '&:hover': {
+                        border: 'none',
+                        outline: 'none',
+                        boxShadow: 'none',
+                    },
+                    '&:focus': {
+                        border: 'none',
+                        outline: 'none',
+                        boxShadow: 'none',
+                    },
+                    '&.Mui-focused': {
+                        border: 'none',
+                        outline: 'none',
+                        boxShadow: 'none',
+                    },
+                },
+                textarea: {
+                    border: 'none',
+                    outline: 'none',
+                    boxShadow: 'none',
+                    '&:hover': {
+                        border: 'none',
+                        outline: 'none',
+                        boxShadow: 'none',
+                    },
+                    '&:focus': {
+                        border: 'none',
+                        outline: 'none',
+                        boxShadow: 'none',
+                    },
+                    '&:focus-within': {
+                        border: 'none',
+                        outline: 'none',
+                        boxShadow: 'none',
+                    },
+                },
+            },
+        },
     },
 });

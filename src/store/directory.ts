@@ -7,15 +7,27 @@ interface CurrentHistory {
     data: Row;
 }
 
+export interface CurrentItemId {
+    [Page.Courses]: string;
+    [Page.Chapters]: string;
+    [Page.Sections]: string;
+}
+
 export interface DirectoryState {
     history: {
         current: CurrentHistory | null;
     };
+    currentItemId: CurrentItemId;
 }
 
 const initialState: DirectoryState = {
     history: {
         current: null,
+    },
+    currentItemId: {
+        [Page.Courses]: '',
+        [Page.Chapters]: '',
+        [Page.Sections]: '',
     },
 };
 
@@ -30,9 +42,18 @@ export const directorySlice = createSlice({
             state.history.current = action.payload;
             return state;
         },
+
+        setCurrentItem: (
+            state: DirectoryState,
+            action: PayloadAction<Partial<DirectoryState['currentItemId']>>,
+        ) => {
+            const newCurrentItemId = action.payload;
+            state.currentItemId = { ...state.currentItemId, ...newCurrentItemId };
+            return state;
+        },
     },
 });
 
-export const { setCurrentHistory } = directorySlice.actions;
+export const { setCurrentHistory, setCurrentItem } = directorySlice.actions;
 
 export default directorySlice.reducer;

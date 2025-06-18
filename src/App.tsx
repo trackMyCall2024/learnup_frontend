@@ -62,14 +62,16 @@ function App() {
                 <Stack id="container" flexDirection={'column'} flex={1} overflow={'auto'}>
                     <Stack
                         flexDirection={'column'}
+                        minWidth={'900px'}
                         sx={{
                             flex: 1,
                             backgroundColor: (th) => th.palette.background.paper,
                             maxHeight: '-webkit-fill-available',
+                            overflowX: 'scroll',
                         }}
                     >
                         <Header />
-                        <Stack padding={'30px'}>
+                        <Stack padding={'30px'} flex={1}>
                             <Outlet />
                         </Stack>
                     </Stack>

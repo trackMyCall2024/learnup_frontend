@@ -1,28 +1,17 @@
 import { colors } from "@mui/material";
 import { createTheme } from "@mui/material/styles";
 
-interface TaskColor {
-    light: string;
-    main: string;
-    dark: string;
-    contrastText: string;
-}
-
-interface TaskStatus {
-    not_started: TaskColor;
-    in_progress: TaskColor;
-    relaunch: TaskColor;
-    success: TaskColor;
-    declined: TaskColor;
+interface Purple {
+    main: string
 }
 
 declare module "@mui/material/styles" {
     interface Palette {
-        taskStatus: TaskStatus;
+        purple: Purple;
     }
 
     interface PaletteOptions {
-        taskStatus?: TaskStatus;
+        purple?: Purple;
     }
 }
 
@@ -62,7 +51,7 @@ export let themeMui = createTheme({
         grey: {
             "50": "#FAFAFA",
             "100": "#F5F5F5",
-            "200": "#EBEBEB",
+            "200": "#EFEFEF",
             "300": "#CCCCCC", // ← ton gris clair
             "400": "#AAAAAA", // ← ton gris moyen
             "500": "#888888",
@@ -70,6 +59,9 @@ export let themeMui = createTheme({
             "700": "#313131", // ← ton gris foncé
             "800": "#1f1f1f",
             "900": "#171717", // ← ton gris très foncé
+        },
+        purple: {
+            main: '#CED7FF'
         },
         background: {
             default: "#111111",

@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { Auth0Client, User } from '@auth0/auth0-spa-js';
 import { Row } from '../Page/Course/interface.directory';
+import { SectionProps } from '../Page/Section/interface.type';
 
 const auth0 = new Auth0Client({
     domain: 'dev-gied5dxzv0v4e4pa.us.auth0.com',
@@ -48,8 +49,13 @@ export const getUser = async (user: User) => {
     return res.data;
 };
 
-export const getRows = async (controller: string, filterId: string, filterSearch: string) => {
+export const getRows = async (controller: string, filterId: string, filterSearch = '') => {
     const res = await api.get(`${controller}/${filterId}?search=${filterSearch}`);
+    return res.data;
+};
+
+export const getSection = async (sectionId: string) => {
+    const res = await api.get<SectionProps>(`section/single/${sectionId}`);
     return res.data;
 };
 
@@ -59,8 +65,6 @@ export const getHistory = async (historyType: string, filterId: string) => {
 };
 
 export const putHistory = async (historyType: string, historyId: string, filterId: string) => {
-    console.log('@@put try', { historyId, historyType });
-
     const res = await api.put<any>(`history/${filterId}`, {
         history_type: historyType,
         history_id: historyId,

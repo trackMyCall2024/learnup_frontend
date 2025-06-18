@@ -1,3 +1,5 @@
+import { Page } from '../interface.global';
+
 export const getCapitalizeCase = (text?: string): string => {
     if (!text) {
         return '';
@@ -8,3 +10,23 @@ export const getCapitalizeCase = (text?: string): string => {
 
     return `${firstLetter}${rest}`;
 };
+
+export const getController = (currentPage: string) => {
+    const pageElement = pages.find((page) => page.name.toLowerCase() === currentPage?.toLowerCase());
+    return pageElement?.controller;
+};
+
+const pages = [
+    {
+        name: Page.Courses,
+        controller: 'course',
+    },
+    {
+        name: Page.Chapters,
+        controller: 'chapter',
+    },
+    {
+        name: Page.Sections,
+        controller: 'section',
+    },
+];

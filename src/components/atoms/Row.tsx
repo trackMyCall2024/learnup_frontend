@@ -12,7 +12,10 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Page } from '../../interface.global';
 import { globalSelector, State } from '../../store/selector';
 import RenderWhen from './RenderWhen';
-import { setCurrentHistory } from '../../store/directory';
+import { setCurrentHistory, setCurrentItem } from '../../store/directory';
+import { useNavigate } from 'react-router-dom';
+import { getNextPage, usePage } from '../../hooks/usePage';
+import FileAction from './FileActions';
 
 export enum RowType {
     History = 'history',
@@ -26,9 +29,12 @@ interface RowProps {
 
 const Row = ({ rowType, row }: RowProps) => {
     const dispatch = useDispatch();
+    const navigate = useNavigate();
+    const { handleGoToNext } = usePage();
+
     const global = useSelector<State, GlobalState>(globalSelector);
     const historyType = global.page.current.title as string;
-    
+
     return (
         <Box
             sx={{
@@ -36,7 +42,7 @@ const Row = ({ rowType, row }: RowProps) => {
                 flexDirection: 'row',
                 alignItems: 'center',
                 justifyContent: rowType === RowType.List ? 'space-between' : 'flex-start',
-                width: rowType === RowType.List ? '-webkit-fill-available' : '300px',
+                width: rowType === RowType.List ? '-webkit-fill-available' : '40%',
                 cursor: 'pointer',
                 ':hover': {
                     backgroundColor: 'rgba(250, 250, 250, 0.7)',
@@ -47,7 +53,7 @@ const Row = ({ rowType, row }: RowProps) => {
                     setNextPage({
                         _id: row._id,
                         title: getNextPage(global.page.current.title) as RowPage,
-                        isOpen: true,
+                        isOpen: global.page.current.title === Page.Sections ? false : true,
                     }),
                     dispatch(
                         setCurrentHistory({
@@ -55,8 +61,17 @@ const Row = ({ rowType, row }: RowProps) => {
                             data: row,
                         }),
                     ),
+                    dispatch(
+                        setCurrentItem({
+                            [global.page.current.title]: row._id,
+                        }),
+                    ),
                 );
-                slideHalfPageToLeft();
+                if (global.page.current.title === Page.Sections) {
+                    handleGoToNext(() => navigate(`/section/${row._id}`));
+                } else {
+                    slideHalfPageToLeft();
+                }
             }}
         >
             <Stack
@@ -70,35 +85,10 @@ const Row = ({ rowType, row }: RowProps) => {
                 <Text>{row.name}</Text>
             </Stack>
             <RenderWhen if={rowType === RowType.List}>
-                <Stack
-                    display={'flex'}
-                    flexDirection={'row'}
-                    alignItems={'center'}
-                    justifyContent={'center'}
-                    gap={2}
-                >
-                    <FontAwesomeIcon icon={faShareNodes} size="sm" />
-                    <FontAwesomeIcon icon={faArrowDown} size="sm" />
-                </Stack>
+                <FileAction />
             </RenderWhen>
         </Box>
     );
 };
 
 export default Row;
-
-function getNextPage(currentPage: Page): Page | null {
-    switch (currentPage) {
-        case Page.Courses:
-            return Page.Chapters;
-
-        case Page.Chapters:
-            return Page.Sections;
-
-        case Page.Sections:
-            return Page.Chapters;
-
-        default:
-            return null;
-    }
-}

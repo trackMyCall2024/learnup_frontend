@@ -20,7 +20,7 @@ const Rows = ({ headerTitle, rowsData }: RowProps) => {
             <Stack
                 display={'flex'}
                 flexWrap={isHistoryType ? 'wrap' : 'initial'}
-                width={isHistoryType ? '50%' : '100%'}
+                width={'100%'}
                 flexDirection={isHistoryType ? 'row' : 'column'}
                 gap={isHistoryType ? 2 : 1}
             >

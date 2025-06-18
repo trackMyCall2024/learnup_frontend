@@ -7,6 +7,7 @@ import Profile from "../Page/Profile/Profile";
 import Blocker from "../Page/Blocker/Blocker";
 import Settings from "../Page/Settings/Settings";
 import Directory from "../Page/Course/Directory";
+import Section from "../Page/Section/Section";
 
 const AppRoutes = createBrowserRouter([
     {
@@ -29,6 +30,10 @@ const AppRoutes = createBrowserRouter([
             {
                 path: "/sections/:id",
                 element: <Directory/>,
+            },
+            {
+                path: "/section/:id",
+                element: <Section/>,
             },
             {
                 path: "/social",

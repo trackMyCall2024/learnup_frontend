@@ -9,16 +9,15 @@ export interface GlobalState {
         current: {
             title: Page;
         };
+        previous: {
+            _id: string; // Previous course ID, chapter ID, section ID to get data
+            title: Page| RowPage | null;
+        };
         next: {
             _id: string; // Next course ID, chapter ID, section ID to get data
-            title: RowPage|null;
+            title: Page| RowPage | null;
             isOpen: boolean;
         };
-    };
-    history: {
-        [Page.Courses]: boolean;
-        [Page.Chapters]: boolean;
-        [Page.Sections]: boolean;
     };
 }
 
@@ -27,16 +26,15 @@ const initialState: GlobalState = {
         current: {
             title: currentPage as Page,
         },
+        previous: {
+            _id: '',
+            title: null,
+        },
         next: {
             _id: '',
             title: null,
             isOpen: false,
         },
-    },
-    history: {
-        [Page.Courses]: false,
-        [Page.Chapters]: false,
-        [Page.Sections]: false,
     },
 };
 
@@ -46,24 +44,26 @@ export const userSlice = createSlice({
     name: 'global',
     initialState,
     reducers: {
-        setCurrentPage: (state: GlobalState, action: PayloadAction<GlobalState['page']['current']>) => {
+        // TODO - merge 3 methods to 1 method -> set with switch case
+        setCurrentPage: (
+            state: GlobalState,
+            action: PayloadAction<GlobalState['page']['current']>,
+        ) => {
             state.page.current = action.payload;
             return state;
         },
+        // Half page
         setNextPage: (state: GlobalState, action: PayloadAction<GlobalState['page']['next']>) => {
             state.page.next = action.payload;
             return state;
         },
-        setHistory: (
-            state: GlobalState,
-            action: PayloadAction<{ updatedPage: RowPage; haveHistory: boolean }>,
-        ) => {
-            state.history[action.payload.updatedPage] = action.payload.haveHistory;
+        setPreviousPage: (state: GlobalState, action: PayloadAction<GlobalState['page']['previous']>) => {
+            state.page.previous = action.payload;
             return state;
         },
     },
 });
 
-export const { setCurrentPage, setNextPage } = userSlice.actions;
+export const { setCurrentPage, setNextPage, setPreviousPage } = userSlice.actions;
 
 export default userSlice.reducer;
