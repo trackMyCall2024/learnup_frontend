@@ -42,7 +42,7 @@ const Row = ({ rowType, row }: RowProps) => {
                 flexDirection: 'row',
                 alignItems: 'center',
                 justifyContent: rowType === RowType.List ? 'space-between' : 'flex-start',
-                width: rowType === RowType.List ? '-webkit-fill-available' : '40%',
+                width: rowType === RowType.List ? '-webkit-fill-available' : '30%',
                 cursor: 'pointer',
                 ':hover': {
                     backgroundColor: 'rgba(250, 250, 250, 0.7)',
@@ -85,7 +85,7 @@ const Row = ({ rowType, row }: RowProps) => {
                 <Text>{row.name}</Text>
             </Stack>
             <RenderWhen if={rowType === RowType.List}>
-                <FileAction />
+                <FileAction size={'xs'} />
             </RenderWhen>
         </Box>
     );

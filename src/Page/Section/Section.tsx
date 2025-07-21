@@ -1,17 +1,15 @@
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 import { getSection } from '../../protocol/api';
-import { Button, Stack } from '@mui/material';
-import { H3, H4, Text } from '../../components/atoms/Typography';
-import { SectionProps, SectionTexts } from './interface.type';
+import { Stack } from '@mui/material';
+import { ChatMessage, SectionProps, SectionTexts, SelectedGame, View } from './interface.type';
 import RightNavbar from '../../components/atoms/RightNavbar';
 import { useEffect, useState } from 'react';
 import RenderWhen from '../../components/atoms/RenderWhen';
 import Box from '../../components/atoms/Box';
-import FileAction from '../../components/atoms/FileActions';
-import { Textarea } from '@mui/joy';
-import OpenInFullIcon from '@mui/icons-material/OpenInFull';
-import ZoomOutMapIcon from '@mui/icons-material/ZoomOutMap';
+import { ToolsState } from '../../components/atoms/Tools';
+import Page from './Page';
+import Chat from './Chat';
 
 const Section = () => {
     // QUERY
@@ -28,6 +26,18 @@ const Section = () => {
     const haveSection = !!sectionData?._id;
 
     const [filterSearch, setFilterSearch] = useState<string>('');
+
+    // TOOLS STATES
+    const [pageIndex, setPageIndex] = useState<number>(0);
+    const [chatIsOpen, setChatIsOpen] = useState<boolean>(false);
+    const [startedParty, setStartedParty] = useState<boolean>(false);
+    const [view, setView] = useState<View>(View.Pages);
+    const [selectedGame, setSelectedGame] = useState<SelectedGame>(SelectedGame.Quiz);
+
+    // GLOBAL LOCAL STATES
+    const [canDisplayRightNavbar, setCanDisplayRightNavbar] = useState<boolean>(true);
+    const [isLargeChat, setIsLargeChat] = useState<boolean>(false);
+
     const [text, setText] = useState<SectionTexts>({
         currentPage: {
             title: '',
@@ -39,12 +49,51 @@ const Section = () => {
         note: '',
     });
 
+    const ariaValue =
+        view === View.Pages
+            ? text.currentPage.data
+            : view === View.Resume
+              ? text.resume
+              : text.note;
+
+    const handleAriaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        const newValue = e.target.value;
+
+        switch (view) {
+            case View.Pages: {
+                const newCurrentPage = { ...text.currentPage, data: newValue };
+                setText((prev) => ({ ...prev, currentPage: newCurrentPage }));
+                break;
+            }
+
+            case View.Resume: {
+                const newResume = newValue;
+                setText((prev) => ({ ...prev, resume: newResume }));
+                break;
+            }
+
+            case View.Note: {
+                const newNote = newValue;
+                setText((prev) => ({ ...prev, note: newNote }));
+                break;
+            }
+
+            default:
+                break;
+        }
+    };
+
+    const sendMessage = (chat: ChatMessage) => {
+        const newChat = [...text.chat, chat];
+        setText((prev) => ({ ...prev, chat: newChat }));
+    };
+
     useEffect(() => {
         if (haveSection) {
             const currentPage: SectionTexts['currentPage'] = {
-                title: sectionData.content.pages[0].title,
-                subtitle: sectionData.content.pages[0].subtitle,
-                data: sectionData.content.pages[0].data,
+                title: sectionData.content.pages[pageIndex].title,
+                subtitle: sectionData.content.pages[pageIndex].subtitle,
+                data: sectionData.content.pages[pageIndex].data,
             };
 
             setText({
@@ -54,7 +103,33 @@ const Section = () => {
                 note: sectionData.content.note,
             });
         }
-    }, [haveSection]);
+    }, [haveSection, pageIndex]);
+
+    const tools: ToolsState = {
+        view: {
+            value: view,
+            set: setView,
+        },
+        pageIndex: {
+            value: pageIndex,
+            set: setPageIndex,
+        },
+        openChat: {
+            value: chatIsOpen,
+            set: setChatIsOpen,
+        },
+        startedParty: {
+            value: startedParty,
+            set: setStartedParty,
+        },
+        game: {
+            value: selectedGame,
+            set: setSelectedGame,
+        },
+    };
+
+    console.log('@@text', text.chat);
+    console.log('@@section', sectionData?.chat);
 
     return (
         <Stack display={'flex'} flex={1} flexDirection={'row'} gap={5}>
@@ -62,7 +137,7 @@ const Section = () => {
                 {/* <Search inputValue={filterSearch} setInputValue={setFilterSearch} /> */}
                 <RenderWhen if={haveSection}>
                     <Stack display={'flex'} flexDirection={'column'} gap={2} flex={1}>
-                        <H3 sx={{ fontWeight: '600' }}>{sectionData?.name}</H3>
+                        {/* <H3 sx={{ fontWeight: '600' }}>{sectionData?.name}</H3> */}
                         <Box
                             sx={{
                                 display: 'flex',
@@ -71,60 +146,31 @@ const Section = () => {
                                 padding: 0,
                             }}
                         >
-                            <Stack
-                                sx={{
-                                    borderBottom: (th) => `0.5px solid ${th.palette.grey['400']}`,
-                                }}
-                                padding={2}
-                            >
-                                <Stack
-                                    display={'flex'}
-                                    flexDirection={'row'}
-                                    justifyContent={'space-between'}
-                                >
-                                    <Stack gap={0.5}>
-                                        <H4 sx={{ fontWeight: '500' }}>{text.currentPage.title}</H4>
-                                        <Text sx={{ color: (th) => th.palette.primary[600] }}>
-                                            {text.currentPage.subtitle}
-                                        </Text>
-                                    </Stack>
-                                    <Stack
-                                        flexDirection={'column'}
-                                        justifyContent={'space-between'}
-                                        alignItems={'flex-end'}
-                                    >
-                                        <ZoomOutMapIcon fontSize="small" sx={{ color: (th) => th.palette.primary['600'], cursor: 'pointer'}} />
-                                        <FileAction size="sm" />
-                                    </Stack>
-                                </Stack>
-                            </Stack>
-                            <Textarea
-                                onChange={(e) =>
-                                    setText({
-                                        ...text,
-                                        currentPage: {
-                                            ...text.currentPage,
-                                            data: e.target.value,
-                                        },
-                                    })
-                                }
-                                value={text.currentPage.data}
-                                sx={{
-                                    flex: 1,
-                                    padding: 2,
-                                    border: 0,
-                                    // overflowY: 'auto',
-                                    maxHeight: '-webkit-fill-available',
-                                    '& .Mui-focused': {
-                                        border: 0,
-                                    },
-                                }}
-                            />
+                            <RenderWhen if={haveSection && !chatIsOpen}>
+                                <Page
+                                    sectionName={sectionData?.name as string}
+                                    tools={tools}
+                                    canDisplayRightNavbar={canDisplayRightNavbar}
+                                    ariaValue={ariaValue}
+                                    setCanDisplayRightNavbar={setCanDisplayRightNavbar}
+                                    handleAriaChange={handleAriaChange}
+                                />
+                            </RenderWhen>
+                            <RenderWhen if={haveSection && chatIsOpen && !!section.data?.chat}>
+                                <Chat
+                                    chat={text.chat}
+                                    sendMessage={sendMessage}
+                                    isLargeChat={isLargeChat}
+                                    setIsLargeChat={setIsLargeChat}
+                                />
+                            </RenderWhen>
                         </Box>
                     </Stack>
                 </RenderWhen>
             </Stack>
-            <RightNavbar />
+            <RenderWhen if={canDisplayRightNavbar && !isLargeChat}>
+                <RightNavbar section={section.data} tools={tools} />
+            </RenderWhen>
         </Stack>
     );
 };

@@ -1,4 +1,3 @@
-import { Children } from 'react';
 import Box from './Box';
 import { SxProps, Theme } from '@mui/material';
 
@@ -15,8 +14,6 @@ const CustomBtn = ({ children, sx, onClick }: CustomBtnProps) => {
                 ...sx,
                 p: 1,
                 cursor: 'pointer',
-                height: '14px',
-                width: '14px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',

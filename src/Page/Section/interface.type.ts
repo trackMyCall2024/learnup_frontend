@@ -34,3 +34,19 @@ export interface SectionTexts {
     resume: string;
     note: string;
 }
+
+export interface PageIndex {
+    current: number;
+    list: number[];
+}
+
+export enum View {
+    Pages = 'pages',
+    Resume = 'resume',
+    Note = 'note',
+}
+
+export enum SelectedGame {
+    Quiz = 'quiz',
+    FlashCard = 'flashCard',
+}

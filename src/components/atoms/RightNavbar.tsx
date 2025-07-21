@@ -1,39 +1,39 @@
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import Box from './Box';
 import { directorySelector, globalSelector, State, userSelector } from '../../store/selector';
-import { GlobalState, setPreviousPage } from '../../store/global';
+import { GlobalState } from '../../store/global';
 import { UserState } from '../../store/user';
 import { useQuery } from '@tanstack/react-query';
 import { getCapitalizeCase, getController } from '../../utils/utils';
 import { getRows } from '../../protocol/api';
 import { Stack } from '@mui/material';
-import { H4, Text } from './Typography';
+import { H4 } from './Typography';
 import { Page } from '../../interface.global';
-import { CurrentItemId, DirectoryState, setCurrentItem } from '../../store/directory';
+import { CurrentItemId, DirectoryState } from '../../store/directory';
 import { Row } from '../../Page/Course/interface.directory';
 import RenderWhen from './RenderWhen';
-import { useNavigate } from 'react-router-dom';
-import { usePage } from '../../hooks/usePage';
+import { SectionProps } from '../../Page/Section/interface.type';
+import RightList from './RightList';
+import Tools, { ToolsState } from './Tools';
 
-const RightNavbar = () => {
-    const navigate = useNavigate();
-    const dispatch = useDispatch();
-    const { handleGoToNext, handleGoToPrevious } = usePage();
+interface RightNavBarProps {
+    section?: SectionProps;
+    tools?: ToolsState;
+}
 
+const RightNavbar = ({ section, tools: toolsState }: RightNavBarProps) => {
     const global = useSelector<State, GlobalState>(globalSelector);
     const user = useSelector<State, UserState>(userSelector);
     const directory = useSelector<State, DirectoryState>(directorySelector);
 
+    const isSectionPage = global.page.current.title === Page.Section;
+
     const previousPage = global.page.previous.title as string;
-    const previousItemId = directory.currentItemId[previousPage as keyof CurrentItemId];
     const filterId = getPreviousIdFetching(
         global.page.current.title,
         directory.currentItemId,
         user._id,
     );
-
-    // get title (last page)
-    // get row data of last page
 
     const controller = getController(previousPage) as string;
 
@@ -41,15 +41,13 @@ const RightNavbar = () => {
     const rows = useQuery({
         queryKey: ['getRows', filterId],
         queryFn: () => getRows(controller, filterId),
-        enabled: !!controller,
+        enabled: !!controller && !isSectionPage,
     });
 
-    console.log('#@rows', rows.data);
-    console.log('#@currentItemId', previousItemId, directory.currentItemId);
-    console.log('@@ controller', controller);
-    console.log('@@ filterid', filterId);
-    console.log('@@ previousPage', previousPage);
-    console.log('@@ previousPage id', directory.currentItemId[previousPage as keyof CurrentItemId]);
+    const previousPages = rows.data?.rows?.map((row: Row, i: number) => (
+        <RightList key={i} row={row} index={i} />
+    ));
+    const tools = <Tools section={section} tools={toolsState as ToolsState}/>;
 
     return (
         <Box sx={{ flex: 1, padding: 0, minWidth: '288px' }}>
@@ -62,52 +60,13 @@ const RightNavbar = () => {
                     borderTopRightRadius: '6px',
                 }}
             >
-                <H4 sx={{ fontWeight: '600' }}>{getCapitalizeCase(previousPage)}</H4>
+                <H4 sx={{ fontWeight: '600' }}>
+                    {section?.name ? 'Tools' : getCapitalizeCase(previousPage)}
+                </H4>
             </Stack>
             <Stack display={'flex'} flexDirection={'column'} p={2} gap={2}>
-                <RenderWhen if={!!rows.data?.rows}>
-                    {rows.data?.rows?.map((row: Row, i: number) => {
-                        return (
-                            <Box
-                                key={i}
-                                onClick={() => {
-                                    dispatch(
-                                        setPreviousPage({
-                                            _id: row._id,
-                                            title: global.page.previous.title,
-                                        }),
-                                    );
-                                    dispatch(
-                                        setCurrentItem({
-                                            [global.page.previous.title as keyof CurrentItemId]:
-                                                row._id,
-                                        }),
-                                    );
-                                    navigate(`/${global.page.current.title}/${row._id}`);
-                                }}
-                                sx={{
-                                    display: 'flex',
-                                    flexDirection: 'row',
-                                    flex: 1,
-                                    gap: 1,
-                                    backgroundColor:
-                                        row._id === previousItemId
-                                            ? (th) => th.palette.purple.main
-                                            : 'initial',
-                                    cursor: 'pointer',
-                                    ':hover': {
-                                        backgroundColor:
-                                            row._id === previousItemId
-                                                ? (th) => th.palette.purple.main
-                                                : 'rgba(250, 250, 250, 0.7)',
-                                    },
-                                }}
-                            >
-                                <Text>{++i}.</Text>
-                                <Text>{row.name}</Text>
-                            </Box>
-                        );
-                    })}
+                <RenderWhen if={isSectionPage} elseRender={previousPages}>
+                    {tools}
                 </RenderWhen>
             </Stack>
         </Box>

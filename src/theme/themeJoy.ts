@@ -1,5 +1,28 @@
 import { extendTheme } from '@mui/joy';
 
+interface ColorOptions {
+    50?: string;
+    100?: string;
+    200?: string;
+    300?: string;
+    400?: string;
+    500?: string;
+    600?: string;
+    700?: string;
+    800?: string;
+    900?: string;
+}
+
+declare module '@mui/joy/styles' {
+    interface Palette {
+        grey?: ColorOptions;
+    }
+
+    interface PaletteOptions {
+        grey?: ColorOptions;
+    }
+}
+
 export const themeJoy = extendTheme({
     colorSchemes: {
         light: {
@@ -23,6 +46,18 @@ export const themeJoy = extendTheme({
                 background: {
                     body: '#111111',
                     surface: '#FEFEFE',
+                },
+                grey: {
+                    '50': '#FAFAFA',
+                    '100': '#F5F5F5',
+                    '200': '#EFEFEF',
+                    '300': '#CCCCCC', // ← ton gris clair
+                    '400': '#AAAAAA', // ← ton gris moyen
+                    '500': '#888888',
+                    '600': '#535353',
+                    '700': '#313131', // ← ton gris foncé
+                    '800': '#1f1f1f',
+                    '900': '#171717', // ← ton gris très foncé
                 },
             },
         },

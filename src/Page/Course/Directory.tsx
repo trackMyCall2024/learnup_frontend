@@ -52,10 +52,11 @@ const Directory = ({ halfPageIsOpen, idFromHalfPage, headerFromHalfPage }: Direc
         queryFn: () => getHistory(currentPage as string, user._id),
         refetchOnMount: true,
         refetchOnWindowFocus: true,
+        enabled: currentPage === Page.Courses
     });
 
     // state display { history, rightNavbar: enum }
-    // Render when display rightNavbar (if not courses) -> composant rightNavbar (props: page)
+    // Render when display rightNavbar (if not courses) -> composant rightNavbar (props: page)    
 
     const haveRows = !rows.isLoading && rows.data;
     const haveHistory = !!history.data?.length;
@@ -80,7 +81,7 @@ const Directory = ({ halfPageIsOpen, idFromHalfPage, headerFromHalfPage }: Direc
                 <RenderWhen if={halfPageIsOpen}>{headerFromHalfPage}</RenderWhen>
                 <Stack p={idFromHalfPage ? '30px' : 0} gap={5}>
                     <Search inputValue={filterSearch} setInputValue={setFilterSearch} />
-                    <RenderWhen if={haveHistory}>
+                    <RenderWhen if={haveHistory && currentPage === Page.Courses}>
                         <Rows headerTitle={'History'} rowsData={history.data as Row[]} />
                     </RenderWhen>
                     <RenderWhen if={haveRows}>
