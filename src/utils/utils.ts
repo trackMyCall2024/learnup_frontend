@@ -1,4 +1,6 @@
+import { HistoryType } from '../components/atoms/Row';
 import { Page } from '../interface.global';
+import { DirectoryType } from '../Page/Course/interface.directory';
 
 export const getCapitalizeCase = (text?: string): string => {
     if (!text) {
@@ -30,3 +32,29 @@ const pages = [
         controller: 'section',
     },
 ];
+
+export function getHistoryType(currentPage: string): HistoryType {
+    switch (currentPage) {
+        case Page.Courses:
+            return HistoryType.Course;
+        case Page.Chapters:
+            return HistoryType.Chapter;
+        case Page.Sections:
+            return HistoryType.Section;
+        default:
+            return HistoryType.Course;
+    }
+}
+
+export function getDirectoryType(currentPage: string): DirectoryType {
+    switch (currentPage) {
+        case Page.Courses:
+            return DirectoryType.Course;
+        case Page.Chapters:
+            return DirectoryType.Chapter;
+        case Page.Sections:
+            return DirectoryType.Section;
+        default:
+            return DirectoryType.Course;
+    }
+}

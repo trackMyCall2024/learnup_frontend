@@ -16,6 +16,7 @@ interface RowProps {
 const Rows = ({ headerTitle, rowsData }: RowProps) => {
     const global = useSelector<State, GlobalState>(globalSelector);
 
+    console.log(rowsData, 'rowsData');
     const isHistoryType = headerTitle === 'History';
     const rowList = rowsData?.map((row, i) => <Row key={i} row={row} rowType={RowType.List} />);
     const history = rowsData?.map((row, i) => <Row key={i} row={row} rowType={RowType.History} />);

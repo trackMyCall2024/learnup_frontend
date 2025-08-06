@@ -27,6 +27,12 @@ interface RowProps {
     row: RowInterface;
 }
 
+export enum HistoryType {
+    Course = 'courses',
+    Chapter = 'chapters',
+    Section = 'sections',
+}
+
 const Row = ({ rowType, row }: RowProps) => {
     const dispatch = useDispatch();
     const navigate = useNavigate();

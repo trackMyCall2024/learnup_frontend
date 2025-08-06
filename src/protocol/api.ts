@@ -1,7 +1,9 @@
 import axios from 'axios';
 import { Auth0Client, User } from '@auth0/auth0-spa-js';
 import { Row } from '../Page/Course/interface.directory';
-import { SectionProps } from '../Page/Section/interface.type';
+import { Page, SectionProps } from '../Page/Section/interface.type';
+import { HistoryType } from '../components/atoms/Row';
+import { ChatResponse, ChunkResponse, DirectoryResponse, NoteResponse, PageResponse, ResumeResponse } from './api.type';
 
 const auth0 = new Auth0Client({
     domain: 'dev-gied5dxzv0v4e4pa.us.auth0.com',
@@ -49,18 +51,20 @@ export const getUser = async (user: User) => {
     return res.data;
 };
 
-export const getRows = async (controller: string, filterId: string, filterSearch = '') => {
-    const res = await api.get(`${controller}/${filterId}?search=${filterSearch}`);
+export const getRows = async (
+    controller: string,
+    filterId: string,
+    filterSearch = '',
+    pagination: number,
+    limit: number,
+) => {
+    const query = `search=${filterSearch}&type=${controller}&pagination=${pagination}&limit=${limit}&parentID=${filterId}`;
+    const res = await api.get(`directory?${query}`);
     return res.data;
 };
 
-export const getSection = async (sectionId: string) => {
-    const res = await api.get<SectionProps>(`section/single/${sectionId}`);
-    return res.data;
-};
-
-export const getHistory = async (historyType: string, filterId: string) => {
-    const res = await api.get<Row[]>(`history/${filterId}?history_type=${historyType}`);
+export const getHistory = async (historyType: HistoryType, userID: string) => {
+    const res = await api.get<Row[]>(`history/${userID}?directory_type=${historyType}`);
     return res.data;
 };
 
@@ -70,5 +74,30 @@ export const putHistory = async (historyType: string, historyId: string, filterI
         history_id: historyId,
     });
 
+    return res.data;
+};
+
+export const getDirectory = async (sectionId: string) => {
+    const res = await api.get<DirectoryResponse>(`directory/${sectionId}`);
+    return res.data;
+};
+
+export const getResume = async (sectionId: string) => {
+    const res = await api.get<ResumeResponse>(`resume/${sectionId}`);
+    return res.data;
+};
+
+export const getNote = async (sectionId: string) => {
+    const res = await api.get<NoteResponse>(`note/${sectionId}`);
+    return res.data;
+};
+
+export const getChat = async (sectionId: string) => {
+    const res = await api.get<ChatResponse[]>(`chat/${sectionId}`);
+    return res.data;
+};
+
+export const getPages = async (sectionId: string) => {
+    const res = await api.get<Page[]>(`page/${sectionId}`);
     return res.data;
 };

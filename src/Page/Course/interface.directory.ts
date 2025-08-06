@@ -1,8 +1,15 @@
 import { Page } from "../../interface.global";
 
+export enum DirectoryType {
+    Course = "Course",
+    Chapter = "Chapter",
+    Section = "Section",
+}
+
 export interface Row {
     _id: string;
-    user: string;
+    parentID: string;
     name: string;
-    logo?: string;
+    logo: string;
+    type: DirectoryType;
 }

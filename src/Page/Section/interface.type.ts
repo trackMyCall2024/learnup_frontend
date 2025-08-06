@@ -1,18 +1,13 @@
+import { ChatResponse, MongoDBObjectId, NoteResponse, PageResponse, ResumeResponse } from "../../protocol/api.type";
+
 export enum UserSection {
     Ia = 'ia',
     User = 'user',
 }
 
-export interface Page {
+export interface Page extends MongoDBObjectId {
     title: string;
-    subtitle: string;
     data: string;
-}
-
-export interface Content {
-    pages: Page[];
-    resume: string;
-    note: string;
 }
 
 export interface ChatMessage {
@@ -22,22 +17,12 @@ export interface ChatMessage {
 
 export interface SectionProps {
     _id: string;
+    parentId: string;
     name: string;
-    chapter: string;
-    content: Content;
-    chat: ChatMessage[];
-}
-
-export interface SectionTexts {
-    currentPage: Page;
-    chat: ChatMessage[];
-    resume: string;
-    note: string;
-}
-
-export interface PageIndex {
-    current: number;
-    list: number[];
+    chat: ChatResponse[];
+    pages: Page[];
+    resume: ResumeResponse;
+    note: NoteResponse;
 }
 
 export enum View {

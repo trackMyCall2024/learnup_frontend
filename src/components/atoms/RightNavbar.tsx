@@ -4,7 +4,7 @@ import { directorySelector, globalSelector, State, userSelector } from '../../st
 import { GlobalState } from '../../store/global';
 import { UserState } from '../../store/user';
 import { useQuery } from '@tanstack/react-query';
-import { getCapitalizeCase, getController } from '../../utils/utils';
+import { getCapitalizeCase, getController, getDirectoryType } from '../../utils/utils';
 import { getRows } from '../../protocol/api';
 import { Stack } from '@mui/material';
 import { H4 } from './Typography';
@@ -15,6 +15,7 @@ import RenderWhen from './RenderWhen';
 import { SectionProps } from '../../Page/Section/interface.type';
 import RightList from './RightList';
 import Tools, { ToolsState } from './Tools';
+import { useState } from 'react';
 
 interface RightNavBarProps {
     section?: SectionProps;
@@ -36,15 +37,15 @@ const RightNavbar = ({ section, tools: toolsState }: RightNavBarProps) => {
     );
 
     const controller = getController(previousPage) as string;
-
+    const [pagination, setPagination] = useState({ page: 1, limit: 10 });
     // REQUESTS
     const rows = useQuery({
-        queryKey: ['getRows', filterId],
-        queryFn: () => getRows(controller, filterId),
-        enabled: !!controller && !isSectionPage,
+        queryKey: ['getRows', filterId, pagination],
+        queryFn: () => getRows(getDirectoryType(previousPage), filterId, '', pagination.page, pagination.limit),
+        enabled: !!controller && !isSectionPage,    
     });
 
-    const previousPages = rows.data?.rows?.map((row: Row, i: number) => (
+    const previousPages = rows.data?.map((row: Row, i: number) => (
         <RightList key={i} row={row} index={i} />
     ));
     const tools = <Tools section={section} tools={toolsState as ToolsState}/>;

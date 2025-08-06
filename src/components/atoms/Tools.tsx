@@ -110,7 +110,7 @@ const Tools = ({ section, tools }: ToolsProps) => {
                     alignItems={'flex-end'}
                     gap={2}
                 >
-                    {section?.content.pages?.map((page, i) => (
+                    {section?.pages?.map((_, i) => (
                         <CustomBtn
                             key={i}
                             sx={{
@@ -156,8 +156,10 @@ const Tools = ({ section, tools }: ToolsProps) => {
                     onChange={(_, value) => tools.game.set(value ?? SelectedGame.Quiz)}
                     placeholder="Choose a game"
                 >
-                    {gameOptions.map((option) => (
-                        <Option value={option}>{getCapitalizeCase(option)}</Option>
+                    {gameOptions.map((option, index) => (
+                        <Option key={index} value={option}>
+                            {getCapitalizeCase(option)}
+                        </Option>
                     ))}
                 </Select>
                 <Button

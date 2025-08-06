@@ -1,8 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
-import { getSection } from '../../protocol/api';
+import { getChat, getDirectory, getNote, getPages, getResume } from '../../protocol/api';
 import { Stack } from '@mui/material';
-import { ChatMessage, SectionProps, SectionTexts, SelectedGame, View } from './interface.type';
+import {
+    ChatMessage,
+    Page as PageInterface,
+    SectionProps,
+    SelectedGame,
+    View,
+} from './interface.type';
 import RightNavbar from '../../components/atoms/RightNavbar';
 import { useEffect, useState } from 'react';
 import RenderWhen from '../../components/atoms/RenderWhen';
@@ -10,22 +16,57 @@ import Box from '../../components/atoms/Box';
 import { ToolsState } from '../../components/atoms/Tools';
 import Page from './Page';
 import Chat from './Chat';
+import {
+    ChatResponse,
+    ChunkResponse,
+    DirectoryResponse,
+    NoteResponse,
+    PageResponse,
+    ResumeResponse,
+} from '../../protocol/api.type';
+import { log } from 'console';
 
 const Section = () => {
     // QUERY
-    const { id: sectionId } = useParams();
+    const { id } = useParams();
+    const sectionId = id as string;
 
     // REQUESTS
-    const section = useQuery({
-        queryKey: ['getSection'],
-        queryFn: () => getSection(sectionId as string),
+    const directoryRequest = useQuery({
+        queryKey: ['getDirectory'],
+        queryFn: () => getDirectory(sectionId),
         enabled: !!sectionId,
     });
 
-    const sectionData = section.data as SectionProps | undefined;
-    const haveSection = !!sectionData?._id;
+    const resumeRequest = useQuery({
+        queryKey: ['getResume'],
+        queryFn: () => getResume(sectionId),
+        enabled: !!sectionId,
+    });
 
-    const [filterSearch, setFilterSearch] = useState<string>('');
+    const noteRequest = useQuery({
+        queryKey: ['getNote'],
+        queryFn: () => getNote(sectionId),
+        enabled: !!sectionId,
+    });
+
+    const chatRequest = useQuery({
+        queryKey: ['getChat'],
+        queryFn: () => getChat(sectionId),
+        enabled: !!sectionId,
+    });
+
+    const pagesRequest = useQuery({
+        queryKey: ['getPages'],
+        queryFn: () => getPages(sectionId as string),
+        enabled: !!sectionId,
+    });
+
+    const [directory, setDirectory] = useState<DirectoryResponse | null>(null);
+    const [resume, setResume] = useState<ResumeResponse | null>(null);
+    const [note, setNote] = useState<NoteResponse | null>(null);
+    const [chat, setChat] = useState<ChatResponse[]>([]);
+    const [pages, setPages] = useState<PageInterface[]>([]);
 
     // TOOLS STATES
     const [pageIndex, setPageIndex] = useState<number>(0);
@@ -34,47 +75,39 @@ const Section = () => {
     const [view, setView] = useState<View>(View.Pages);
     const [selectedGame, setSelectedGame] = useState<SelectedGame>(SelectedGame.Quiz);
 
+    const isLoading = resumeRequest.isLoading || noteRequest.isLoading || chatRequest.isLoading;
+
     // GLOBAL LOCAL STATES
     const [canDisplayRightNavbar, setCanDisplayRightNavbar] = useState<boolean>(true);
     const [isLargeChat, setIsLargeChat] = useState<boolean>(false);
-
-    const [text, setText] = useState<SectionTexts>({
-        currentPage: {
-            title: '',
-            subtitle: '',
-            data: '',
-        },
-        chat: [],
-        resume: '',
-        note: '',
-    });
-
-    const ariaValue =
-        view === View.Pages
-            ? text.currentPage.data
-            : view === View.Resume
-              ? text.resume
-              : text.note;
 
     const handleAriaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         const newValue = e.target.value;
 
         switch (view) {
             case View.Pages: {
-                const newCurrentPage = { ...text.currentPage, data: newValue };
-                setText((prev) => ({ ...prev, currentPage: newCurrentPage }));
+                const newCurrentPage = { ...pages[pageIndex], data: newValue };
+                setPages((prev) => {
+                    const newPages = [...prev];
+                    newPages[pageIndex] = newCurrentPage;
+                    return newPages;
+                });
                 break;
             }
 
             case View.Resume: {
-                const newResume = newValue;
-                setText((prev) => ({ ...prev, resume: newResume }));
+                if (resume) {
+                    const newResume = { ...resume, data: newValue };
+                    setResume(newResume);
+                }
                 break;
             }
 
             case View.Note: {
-                const newNote = newValue;
-                setText((prev) => ({ ...prev, note: newNote }));
+                if (note) {
+                    const newNote = { ...note, data: newValue };
+                    setNote(newNote);
+                }
                 break;
             }
 
@@ -83,27 +116,10 @@ const Section = () => {
         }
     };
 
-    const sendMessage = (chat: ChatMessage) => {
-        const newChat = [...text.chat, chat];
-        setText((prev) => ({ ...prev, chat: newChat }));
+    const sendMessage = (newMessage: ChatMessage) => {
+        const newChat = [...chat, { ...newMessage, section: sectionId as string } as ChatResponse];
+        setChat(newChat);
     };
-
-    useEffect(() => {
-        if (haveSection) {
-            const currentPage: SectionTexts['currentPage'] = {
-                title: sectionData.content.pages[pageIndex].title,
-                subtitle: sectionData.content.pages[pageIndex].subtitle,
-                data: sectionData.content.pages[pageIndex].data,
-            };
-
-            setText({
-                currentPage,
-                chat: sectionData.chat,
-                resume: sectionData.content.resume,
-                note: sectionData.content.note,
-            });
-        }
-    }, [haveSection, pageIndex]);
 
     const tools: ToolsState = {
         view: {
@@ -128,16 +144,41 @@ const Section = () => {
         },
     };
 
-    console.log('@@text', text.chat);
-    console.log('@@section', sectionData?.chat);
+    // display chunks ou note ou resume
+    const ariaValue = getAriaValue(view, pageIndex, pages, resume, note);
+
+    const sectionData: SectionProps = {
+        _id: directory?._id as string,
+        parentId: directory?.parentId as string,
+        name: directory?.name as string,
+        chat,
+        pages,
+        resume: resume as ResumeResponse,
+        note: note as NoteResponse,
+    };
+
+    const haveSection =
+        !!directoryRequest?.data?._id &&
+        !!pagesRequest?.data &&
+        !!resumeRequest?.data &&
+        !!noteRequest?.data &&
+        !!chatRequest?.data;
+
+    useEffect(() => {
+        if (haveSection) {
+            setPages(pagesRequest.data as PageInterface[]);
+            setChat(chatRequest.data as ChatResponse[]);
+            setResume(resumeRequest.data as ResumeResponse);
+            setNote(noteRequest.data as NoteResponse);
+            setDirectory(directoryRequest.data as DirectoryResponse);
+        }
+    }, [haveSection, pageIndex]);
 
     return (
         <Stack display={'flex'} flex={1} flexDirection={'row'} gap={5}>
             <Stack display={'flex'} flexDirection={'column'} width={'-webkit-fill-available'}>
-                {/* <Search inputValue={filterSearch} setInputValue={setFilterSearch} /> */}
                 <RenderWhen if={haveSection}>
                     <Stack display={'flex'} flexDirection={'column'} gap={2} flex={1}>
-                        {/* <H3 sx={{ fontWeight: '600' }}>{sectionData?.name}</H3> */}
                         <Box
                             sx={{
                                 display: 'flex',
@@ -156,9 +197,9 @@ const Section = () => {
                                     handleAriaChange={handleAriaChange}
                                 />
                             </RenderWhen>
-                            <RenderWhen if={haveSection && chatIsOpen && !!section.data?.chat}>
+                            <RenderWhen if={haveSection && chatIsOpen && !!chat}>
                                 <Chat
-                                    chat={text.chat}
+                                    chat={chat as ChatMessage[]}
                                     sendMessage={sendMessage}
                                     isLargeChat={isLargeChat}
                                     setIsLargeChat={setIsLargeChat}
@@ -169,10 +210,27 @@ const Section = () => {
                 </RenderWhen>
             </Stack>
             <RenderWhen if={canDisplayRightNavbar && !isLargeChat}>
-                <RightNavbar section={section.data} tools={tools} />
+                <RightNavbar section={sectionData} tools={tools} />
             </RenderWhen>
         </Stack>
     );
 };
 
 export default Section;
+
+function getAriaValue(
+    view: View,
+    pageIndex: number,
+    pages: PageInterface[],
+    resume: ResumeResponse | null,
+    note: NoteResponse | null,
+): string {
+    switch (view) {
+        case View.Pages:
+            return pages[pageIndex]?.data;
+        case View.Resume:
+            return resume?.data || '';
+        case View.Note:
+            return note?.data || '';
+    }
+}
