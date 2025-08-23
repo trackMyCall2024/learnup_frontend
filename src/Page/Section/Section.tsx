@@ -149,7 +149,7 @@ const Section = () => {
 
     const sectionData: SectionProps = {
         _id: directory?._id as string,
-        parentId: directory?.parentId as string,
+        parentId: directory?.parentID as string,
         name: directory?.name as string,
         chat,
         pages,
@@ -164,13 +164,27 @@ const Section = () => {
         !!noteRequest?.data &&
         !!chatRequest?.data;
 
+    console.log('@@Front - pagesRequest.data:', pagesRequest.data);
+    console.log('@@Front - resumeRequest.data:', resumeRequest.data);
+    console.log('@@Front - noteRequest.data:', noteRequest.data);
+    console.log('@@Front - chatRequest.data:', chatRequest.data);
+    console.log('@@Front - directoryRequest.data:', directoryRequest.data);
+
+    console.log('@@Front - haveSection:', haveSection);
+
     useEffect(() => {
         if (haveSection) {
+            console.log('@@Front - pagesRequest.data:', pagesRequest.data);
+            console.log('@@Front - resumeRequest.data:', resumeRequest.data);
+            console.log('@@Front - noteRequest.data:', noteRequest.data);
+
             setPages(pagesRequest.data as PageInterface[]);
             setChat(chatRequest.data as ChatResponse[]);
             setResume(resumeRequest.data as ResumeResponse);
             setNote(noteRequest.data as NoteResponse);
             setDirectory(directoryRequest.data as DirectoryResponse);
+
+            console.log('@@Front - pages state after set:', pagesRequest.data);
         }
     }, [haveSection, pageIndex]);
 

@@ -12,14 +12,18 @@ import { H1 } from './components/atoms/Typography';
 import HalfPage from './Page/Course/HalfPage';
 import Header from './components/Layout/Header';
 import RenderWhen from './components/atoms/RenderWhen';
-import { globalSelector, State } from './store/selector';
+import { globalSelector, recordManagerSelector, State } from './store/selector';
 import { GlobalState } from './store/global';
+import CourseChapterModal from './components/CourseChapterModal';
+import { RecordManagerState, setModalOpen } from './store/recordManager';
 
 function App() {
     const { isAuthenticated, isLoading, user, loginWithRedirect, getAccessTokenSilently } =
         useAuth0();
     const [userIsValid, setUserIsValid] = useState(false);
     const global = useSelector<State, GlobalState>(globalSelector);
+    const dispatch = useDispatch();
+    const isModalOpen = useSelector<State, RecordManagerState>(recordManagerSelector).isModalOpen;
 
     // const token = useQuery({
     //     queryKey: ["set_token"],
@@ -54,29 +58,38 @@ function App() {
         return LoadingPage;
     } else {
         return (
-            <Stack height="100vh" flexDirection="row" overflow="hidden">
-                <RenderWhen if={global.page.next.isOpen}>
-                    <HalfPage />
-                </RenderWhen>
-                <Navbar />
-                <Stack id="container" flexDirection={'column'} flex={1} overflow={'auto'}>
-                    <Stack
-                        flexDirection={'column'}
-                        minWidth={'900px'}
-                        sx={{
-                            flex: 1,
-                            backgroundColor: (th) => th.palette.background.paper,
-                            maxHeight: '-webkit-fill-available',
-                            overflowX: 'scroll',
-                        }}
-                    >
-                        <Header />
-                        <Stack padding={'30px'} flex={1}>
-                            <Outlet />
+            <>
+                <Stack height="100vh" flexDirection="row" overflow="hidden">
+                    <RenderWhen if={global.page.next.isOpen}>
+                        <HalfPage />
+                    </RenderWhen>
+                    <Navbar />
+                    <Stack id="container" flexDirection={'column'} flex={1} overflow={'auto'}>
+                        <Stack
+                            flexDirection={'column'}
+                            minWidth={'900px'}
+                            sx={{
+                                flex: 1,
+                                backgroundColor: (th) => th.palette.background.paper,
+                                maxHeight: '-webkit-fill-available',
+                                overflowX: 'scroll',
+                            }}
+                        >
+                            <Header />
+                            <Stack padding={'30px'} flex={1}>
+                                <Outlet />
+                            </Stack>
                         </Stack>
                     </Stack>
                 </Stack>
-            </Stack>
+
+                {isModalOpen && (
+                    <CourseChapterModal
+                        open={isModalOpen}
+                        onClose={() => dispatch(setModalOpen(false))}
+                    />
+                )}
+            </>
         );
     }
 }

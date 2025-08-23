@@ -7,3 +7,5 @@ export const userSelector = (state: State) => state.user;
 export const globalSelector = (state: State) => state.global;
 
 export const directorySelector = (state: State) => state.directory;
+
+export const recordManagerSelector = (state: State) => state.recordManager;

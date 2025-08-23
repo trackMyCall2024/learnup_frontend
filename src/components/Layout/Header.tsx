@@ -1,10 +1,11 @@
-import { Box, Stack } from '@mui/material';
+import { Box, Stack, Button } from '@mui/material';
 import { H1 } from '../atoms/Typography';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { globalSelector, State } from '../../store/selector';
 import { GlobalState } from '../../store/global';
 import { Page } from '../../interface.global';
 import { getCapitalizeCase } from '../../utils/utils';
+import { setModalOpen } from '../../store/recordManager';
 
 interface HeaderProps {
     titleFromHalfPage?: Page;
@@ -12,6 +13,11 @@ interface HeaderProps {
 
 const Header = ({ titleFromHalfPage }: HeaderProps) => {
     const global = useSelector<State, GlobalState>(globalSelector);
+    const dispatch = useDispatch();
+
+    const handleOpenModal = () => {
+        dispatch(setModalOpen(true));
+    };
 
     return (
         <Stack
@@ -30,13 +36,23 @@ const Header = ({ titleFromHalfPage }: HeaderProps) => {
                     ? getCapitalizeCase(titleFromHalfPage as string)
                     : getCapitalizeCase(global.page.current.title)}
             </H1>
-            <Box
-                height={75}
-                width={75}
-                sx={{ visibility: titleFromHalfPage ? 'hidden' : 'visible' }}
-            >
-                <img src="https://i.ibb.co/qLdPSqsT/logo.jpg" height={'100%'} draggable={false} />
-            </Box>
+            <Stack direction="row" spacing={2} alignItems="center">
+                <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={handleOpenModal}
+                    sx={{ visibility: titleFromHalfPage ? 'hidden' : 'visible' }}
+                >
+                    Start Recording
+                </Button>
+                <Box
+                    height={75}
+                    width={75}
+                    sx={{ visibility: titleFromHalfPage ? 'hidden' : 'visible' }}
+                >
+                    <img src="https://i.ibb.co/qLdPSqsT/logo.jpg" height={'100%'} draggable={false} />
+                </Box>
+            </Stack>
         </Stack>
     );
 };

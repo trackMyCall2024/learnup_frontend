@@ -39,7 +39,14 @@ export interface ChatResponse extends MongoDBObjectId {
 }
 
 export interface DirectoryResponse extends MongoDBObjectId {
-    parentId: string;
+    parentID: string;
+    name: string;
+    logo: string;
+    type: DirectoryType;
+}
+
+export interface DirectoryRequest {
+    parentID: string;
     name: string;
     logo: string;
     type: DirectoryType;
