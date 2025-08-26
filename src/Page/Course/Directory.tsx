@@ -24,7 +24,7 @@ interface DirectoryProps {
 }
 
 const Directory = ({ halfPageIsOpen, idFromHalfPage, headerFromHalfPage }: DirectoryProps) => {
-    const [pagination, setPagination] = useState({ page: 1, limit: 10 });
+    const [pagination, setPagination] = useState({ page: 1, limit: 100 });
 
     // QUERY
     const { id: idFromUrl } = useParams();

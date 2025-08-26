@@ -1,17 +1,16 @@
 import axios from 'axios';
 import { Auth0Client, User } from '@auth0/auth0-spa-js';
 import { Row } from '../Page/Course/interface.directory';
-import { Page, SectionProps } from '../Page/Section/interface.type';
+import { Page } from '../Page/Section/interface.type';
 import { HistoryType } from '../components/atoms/Row';
 import {
     ChatResponse,
-    ChunkResponse,
     DirectoryRequest,
     DirectoryResponse,
     NoteResponse,
-    PageResponse,
     ResumeResponse,
 } from './api.type';
+import config from '../config';
 
 const auth0 = new Auth0Client({
     domain: 'dev-gied5dxzv0v4e4pa.us.auth0.com',
@@ -20,15 +19,23 @@ const auth0 = new Auth0Client({
     useRefreshTokens: true,
 });
 
-const api = axios.create({
-    baseURL: process.env.URL_BACKEND || 'http://localhost:3000',
+const nestServer = axios.create({
+    baseURL: config.URL_BACKEND,
     timeout: 10000,
     headers: {
         'Content-Type': 'application/json',
     },
 });
 
-api.interceptors.response.use(
+const pythonServer = axios.create({
+    baseURL: config.URL_PYTHON,
+    timeout: 10000,
+    headers: {
+        'Content-Type': 'application/json',
+    },
+});
+
+nestServer.interceptors.response.use(
     (response) => response,
     (error) => {
         // Si le token est expiré ou invalide (401 ou 403)
@@ -48,14 +55,14 @@ api.interceptors.response.use(
 
 export function setAuthToken(token: string) {
     if (token) {
-        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        nestServer.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     } else {
-        delete api.defaults.headers.common['Authorization'];
+        delete nestServer.defaults.headers.common['Authorization'];
     }
 }
 
 export const getUser = async (user: User) => {
-    const res = await api.post(`get_user`, user);
+    const res = await nestServer.post(`get_user`, user);
     return res.data;
 };
 
@@ -68,17 +75,17 @@ export const getRows = async (
     limit: number,
 ) => {
     const query = `search=${filterSearch}&type=${controller}&pagination=${pagination}&limit=${limit}&parentID=${filterId}`;
-    const res = await api.get(`directory?${query}`);
+    const res = await nestServer.get(`directory?${query}`);
     return res.data;
 };
 
 export const getHistory = async (historyType: HistoryType, userID: string) => {
-    const res = await api.get<Row[]>(`history/${userID}?directory_type=${historyType}`);
+    const res = await nestServer.get<Row[]>(`history/${userID}?directory_type=${historyType}`);
     return res.data;
 };
 
 export const putHistory = async (historyType: string, historyId: string, filterId: string) => {
-    const res = await api.put<any>(`history/${filterId}`, {
+    const res = await nestServer.put<any>(`history/${filterId}`, {
         history_type: historyType,
         history_id: historyId,
     });
@@ -88,58 +95,74 @@ export const putHistory = async (historyType: string, historyId: string, filterI
 
 // FETCH ONE DIRECTORY
 export const getDirectory = async (parentId: string) => {
-    const res = await api.get<DirectoryResponse>(`directory/${parentId}`);
+    const res = await nestServer.get<DirectoryResponse>(`directory/${parentId}`);
     return res.data;
 };
 
 export const getResume = async (sectionId: string) => {
-    const res = await api.get<ResumeResponse>(`resume/${sectionId}`);
+    const res = await nestServer.get<ResumeResponse>(`resume/${sectionId}`);
     return res.data;
 };
 
 export const getNote = async (sectionId: string) => {
-    const res = await api.get<NoteResponse>(`note/${sectionId}`);
+    const res = await nestServer.get<NoteResponse>(`note/${sectionId}`);
     return res.data;
 };
 
 export const getChat = async (sectionId: string) => {
-    const res = await api.get<ChatResponse[]>(`chat/${sectionId}`);
+    const res = await nestServer.get<ChatResponse[]>(`chat/${sectionId}`);
     return res.data;
 };
 
 export const getPages = async (sectionId: string) => {
-    const res = await api.get<Page[]>(`page/${sectionId}`);
+    const res = await nestServer.get<Page[]>(`page/${sectionId}`);
     return res.data;
 };
 
-export const uploadAudio = async (formData: FormData) => {
-    console.log('@@uploadAudio - formData entries:');
-    for (const [key, value] of Array.from(formData.entries())) {
-        console.log(key, value);
-    }
+export const createTempFile = async ({
+    sectionId,
+    index,
+    filename,
+}: {
+    sectionId: string;
+    index: number;
+    filename: string;
+}) => {
+    const res = await nestServer.post('/file', { sectionId, index, filename });
+    return res.data;
+};
 
-    const res = await api.post('/file/upload', formData, {
-        headers: {
-            'Content-Type': 'multipart/form-data', // Important !
-        },
+export const sendToTranscriptionQueue = async ({
+    audio_base64,
+    audio_format,
+    tmp_file_id,
+    is_last_page,
+}: {
+    audio_base64: string;
+    audio_format: string;
+    tmp_file_id: string;
+    is_last_page: boolean;
+}) => {
+    const res = await pythonServer.post('/transcribe', {
+        audio_base64,
+        audio_format,
+        tmp_file_id,
+        is_last_page,
     });
-
-    // Axios retourne directement la réponse, pas res.ok
-    console.log('@@uploadAudio - response:', res);
-    return res;
+    return res.data;
 };
 
 export const createDirectory = async (directory: DirectoryRequest) => {
-    const res = await api.post<DirectoryResponse>('/directory', directory);
+    const res = await nestServer.post<DirectoryResponse>('/directory', directory);
     return res.data;
 };
 
 export const createResume = async (sectionId: string) => {
-    const res = await api.post<ResumeResponse>(`/resume`, { section: sectionId, data: '' });
+    const res = await nestServer.post<ResumeResponse>(`/resume`, { section: sectionId, data: '' });
     return res.data;
 };
 
 export const createNote = async (sectionId: string) => {
-    const res = await api.post<NoteResponse>(`/note`, { section: sectionId, data: '' });
+    const res = await nestServer.post<NoteResponse>(`/note`, { section: sectionId, data: '' });
     return res.data;
 };

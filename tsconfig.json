@@ -24,6 +24,6 @@
   "include": [
     "src",
     "./src/theme/theme.d.ts",
-    "./src/types/speech-recognition.d.ts"
+    "./src/types/speech-recognition.d.ts",
   ]
 }

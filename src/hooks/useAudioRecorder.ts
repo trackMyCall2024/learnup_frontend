@@ -1,9 +1,10 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { uploadAudio } from '../protocol/api';
+import { createTempFile, sendToTranscriptionQueue } from '../protocol/api';
 
 export enum RecorderState {
     Idle = 'idle',
+    CreatingSection = 'creatingSection',
     Recording = 'recording',
     Paused = 'paused',
     Stopped = 'stopped',
@@ -13,51 +14,73 @@ interface UseAudioRecorderProps {
     stepRecorder?: number;
 }
 
-export const useAudioRecorder = ({ stepRecorder: stepRecorderProps }: UseAudioRecorderProps) => {
+export const useAudioRecorder = ({
+    stepRecorder: stepRecorderFromLocalStorage,
+}: UseAudioRecorderProps) => {
     const [sectionId, setSectionId] = useState<string>('');
     const [state, setState] = useState<RecorderState>(RecorderState.Idle);
-    const [stepRecorder, setStepRecorder] = useState<number>(stepRecorderProps || 1);
+    const [stepRecorder, setStepRecorder] = useState<number>(stepRecorderFromLocalStorage || 0);
+    const [isStopped, setIsStopped] = useState<boolean>(false);
 
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const chunksRef = useRef<BlobPart[]>([]);
 
     const sendAudio = useMutation({
-        mutationFn: async (audioBlob: Blob) => {
-            console.log('@@audioBlob:', audioBlob);
-            console.log('@@audioBlob size:', audioBlob.size);
-            console.log('@@audioBlob type:', audioBlob.type);
+        mutationFn: async ({ audioBlob, isLastPage }: { audioBlob: Blob; isLastPage: boolean }) => {
+            console.debug('@@audioBlob size:', audioBlob.size);
 
-            const formData = new FormData();
+            const audioBase64 = await new Promise<string>((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    const result = reader.result as string;
+                    const base64 = result.split(',')[1];
+                    resolve(base64);
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(audioBlob);
+            });
 
-            formData.append('audio', audioBlob, `${stepRecorder}.webm`);
-            formData.append('sectionId', sectionId);
-            formData.append('index', stepRecorder.toString());
+            const createTempFileRes = await createTempFile({
+                sectionId,
+                index: stepRecorder,
+                filename: `${stepRecorder}.webm`,
+            });
 
-            // Debug FormData
-            console.log('@@formData entries:');
-            for (const [key, value] of Array.from(formData.entries())) {
-                console.log(key, value);
-            }
+            console.log('@@createTempFile:', createTempFileRes);
 
-            const res = await uploadAudio(formData);
-
-            // Axios retourne directement la réponse
-            console.log('@@sendAudio - response:', res);
-            return res.data;
+            await sendToTranscriptionQueue({
+                audio_base64: audioBase64,
+                audio_format: 'webm',
+                tmp_file_id: createTempFileRes.fileId,
+                is_last_page: isLastPage,
+            });
         },
         onSuccess: (data) => {
-            console.log('✅ Audio envoyé avec succès:', data);
+            console.log('Transcription démarrée en arrière-plan');
+            console.log('data:', data);
+            console.log('✅ Audio envoyé avec succès');
+            setStepRecorder(stepRecorder + 1);
         },
         onError: (err) => {
             console.error('❌ Erreur upload audio :', err);
         },
     });
 
+    const sendCurrentAudio = useCallback(
+        ({ isLastPage }: { isLastPage: boolean }) => {
+            const audioBlob = new Blob(chunksRef.current, { type: 'audio/webm' });
+            console.log(`📦 Création du Blob audio final - taille: ${audioBlob.size} bytes`);
+            sendAudio.mutate({ audioBlob, isLastPage });
+            chunksRef.current = [];
+        },
+        [sendAudio],
+    );
+
     const startRecording = useCallback(
-        async (sectionId: string) => {
+        async ({ sectionId }: { sectionId: string }) => {
             setSectionId(sectionId);
 
-            if (state === 'recording') {
+            if (state === RecorderState.Recording) {
                 return;
             }
 
@@ -78,41 +101,21 @@ export const useAudioRecorder = ({ stepRecorder: stepRecorderProps }: UseAudioRe
                 };
 
                 mediaRecorder.onstop = () => {
-                    console.log('@@onstop - chunks count:', chunksRef.current.length);
-                    const audioBlob = new Blob(chunksRef.current, { type: 'audio/webm' });
-                    console.log('@@onstop - final blob size:', audioBlob.size);
-                    sendAudio.mutate(audioBlob);
+                    setIsStopped(true);
+                    sendCurrentAudio({ isLastPage: true });
+                    setStepRecorder(0);
                 };
 
                 mediaRecorder.start();
+
                 setState(RecorderState.Recording);
                 console.log('🎙️ Enregistrement démarré');
             } catch (err) {
                 console.error('Erreur démarrage micro :', err);
             }
         },
-        [state],
+        [state, sendCurrentAudio],
     );
-
-    const pauseRecording = useCallback(() => {
-        if (!mediaRecorderRef.current || state !== RecorderState.Recording) {
-            return;
-        }
-
-        mediaRecorderRef.current.pause();
-        setState(RecorderState.Paused);
-        console.log('⏸️ Enregistrement en pause');
-    }, [state]);
-
-    const resumeRecording = useCallback(() => {
-        if (!mediaRecorderRef.current || state !== RecorderState.Paused) {
-            return;
-        }
-
-        mediaRecorderRef.current.resume();
-        setState(RecorderState.Recording);
-        console.log('▶️ Enregistrement repris');
-    }, [state]);
 
     const stopRecording = useCallback(() => {
         if (!mediaRecorderRef.current) {
@@ -121,17 +124,52 @@ export const useAudioRecorder = ({ stepRecorder: stepRecorderProps }: UseAudioRe
 
         mediaRecorderRef.current.stop();
         mediaRecorderRef.current.stream.getTracks().forEach((t) => t.stop());
-        setState(RecorderState.Stopped);
+        setState(RecorderState.Idle);
         console.log('⏹️ Enregistrement arrêté');
     }, []);
 
+    const clearRecorder = useCallback(() => {
+        setSectionId('');
+        setStepRecorder(0);
+        setState(RecorderState.Idle);
+
+        if (!mediaRecorderRef.current) {
+            return;
+        }
+        mediaRecorderRef.current.stop();
+        mediaRecorderRef.current.stream.getTracks().forEach((t) => t.stop());
+        setState(RecorderState.Idle);
+        console.log('⏹️ Enregistrement annulé');
+    }, []);
+
+    // Méthode pour libérer uniquement le micro sans affecter l'état
+    const releaseMicrophone = useCallback(() => {
+        if (mediaRecorderRef.current && mediaRecorderRef.current.stream) {
+            mediaRecorderRef.current.stream.getTracks().forEach((track) => {
+                track.stop();
+                console.log('🎤 Micro libéré:', track.kind);
+            });
+            mediaRecorderRef.current = null;
+            console.log('🎤 Micro complètement libéré');
+        }
+    }, []);
+
+    useEffect(() => {
+        if (state === RecorderState.Stopped) {
+            console.log('@@releasing microphone');
+            mediaRecorderRef.current = null;
+            // releaseMicrophone();
+        }
+    }, [state, releaseMicrophone]);
+
     return {
+        isStopped,
         state,
-        stepRecorder,
-        setStepRecorder,
         startRecording,
-        pauseRecording,
-        resumeRecording,
         stopRecording,
+        setIsStopped,
+        setState,
+        clearRecorder,
+        releaseMicrophone,
     };
 };

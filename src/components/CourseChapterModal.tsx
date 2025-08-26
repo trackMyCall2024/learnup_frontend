@@ -22,7 +22,6 @@ import {
     setChapters,
     setLoadingCourses,
     setLoadingChapters,
-    setModalOpen,
     resetRecordManager,
     RecordManagerState,
 } from '../store/recordManager';
@@ -38,6 +37,7 @@ interface CourseChapterModalProps {
 }
 
 const CourseChapterModal: React.FC<CourseChapterModalProps> = ({ open, onClose }) => {
+    const INTERVAL_TIME = 5 * 60 * 1000;
     const dispatch = useDispatch();
     const {
         selectedCourseId,
@@ -49,31 +49,42 @@ const CourseChapterModal: React.FC<CourseChapterModalProps> = ({ open, onClose }
     } = useSelector<State, RecordManagerState>(recordManagerSelector);
 
     const user = useSelector((state: State) => state.user);
-
     const [pagination, setPagination] = useState({ page: 1, limit: 10 });
+    const [sectionId, setSectionId] = useState<string | null>(null);
 
     // Audio recorder hook
     const {
         state: recorderState,
         startRecording,
-        pauseRecording,
-        resumeRecording,
         stopRecording,
+        isStopped,
+        setState,
+        clearRecorder,
+        setIsStopped,
+        releaseMicrophone,
     } = useAudioRecorder({});
 
-    // Load courses on component mount
+    const isRecording = recorderState === RecorderState.Recording;
+    const canStartRecording = selectedCourseId && selectedChapterId && !isRecording;
+    const canStopRecording = isRecording;
+
+    // useEffect(() => {
+    //     releaseMicrophone();
+    //     console.log('@@releasing microphone');
+    //     return () => {
+    //         releaseMicrophone();
+    //     };
+    // }, []);
+
+    // Load courses and chapters on component mount
     useEffect(() => {
         if (open && user._id) {
             loadCourses();
         }
-    }, [open, user._id]);
-
-    // Load chapters when course selection changes
-    useEffect(() => {
         if (selectedCourseId) {
             loadChapters(selectedCourseId);
         }
-    }, [selectedCourseId]);
+    }, [open, user._id, selectedCourseId]);
 
     const loadCourses = async () => {
         try {
@@ -119,53 +130,84 @@ const CourseChapterModal: React.FC<CourseChapterModalProps> = ({ open, onClose }
         dispatch(setSelectedChapterId(chapterId));
     };
 
-    const handleStartRecord = async () => {
-        if (recorderState === RecorderState.Recording) {
-            // Si on est en train d'enregistrer, on arrête
-            stopRecording();
-        } else {
-            // Sinon on démarre l'enregistrement
-            // Create section 
-            const section = await createDirectory({
-                parentID: selectedChapterId || '',
-                name: 'new section',
-                logo: 'logo',
-                type: DirectoryType.Section,
-            });
-
-            // create resume
-            await createResume(section._id);
-            // create note
-            await createNote(section._id);
-
-            console.log('@@section', section);
-
-            if (section._id) {
-                startRecording(section._id);
-            }
-        }
+    const handleStartRecord = async (sectionId: string) => {
+        await createResume(sectionId);
+        await createNote(sectionId);
+        startRecording({ sectionId });
+        console.log('@@starting recording with sectionId:', sectionId);
     };
 
-    const handlePauseResume = () => {
-        if (recorderState === RecorderState.Recording) {
-            pauseRecording();
-        } else if (recorderState === RecorderState.Paused) {
-            resumeRecording();
-        }
+    const handleStopRecord = () => {
+        stopRecording();
+        console.log('@@stopping recording');
     };
-
-    const isRecording = recorderState === RecorderState.Recording;
-    const isPaused = recorderState === RecorderState.Paused;
-    const canStartRecording = selectedCourseId && selectedChapterId && !isRecording && !isPaused;
-    const canStopRecording = isRecording || isPaused;
-    const canPauseResume = isRecording || isPaused;
 
     const handleClose = () => {
         dispatch(resetRecordManager());
+        setSectionId(null);
         onClose();
     };
 
-    const isStartRecordDisabled = !selectedCourseId || !selectedChapterId;
+    const handleLesson = async () => {
+        try {
+            let sectionIdToUse = sectionId ?? '';
+            setState(RecorderState.Recording);
+
+            if (sectionIdToUse) {
+                handleStartRecord(sectionIdToUse);
+                return;
+            } else {
+                const section = await createDirectory({
+                    parentID: selectedChapterId || '',
+                    name: 'new lesson',
+                    logo: 'logo',
+                    type: DirectoryType.Section,
+                });
+                sectionIdToUse = section._id;
+            }
+
+            setSectionId(sectionIdToUse);
+            handleStartRecord(sectionIdToUse);
+        } catch (error) {
+            console.error('Error creating section:', error);
+            setState(RecorderState.Idle);
+            clearRecorder();
+        }
+    };
+
+    // STOP RECORDING IF INTERVAL_TIME IS REACHED
+    useEffect(() => {
+        let interval: NodeJS.Timeout | null = null;
+
+        if (isRecording) {
+            console.log('@@starting interval');
+            interval = setInterval(() => {
+                if (isRecording && !isStopped) {
+                    handleStopRecord();
+                }
+            }, INTERVAL_TIME);
+        }
+
+        if (interval && recorderState === RecorderState.Stopped) {
+            console.log('@@stopping interval');
+            clearInterval(interval);
+            clearRecorder();
+        }
+
+        return () => {
+            if (interval) {
+                clearInterval(interval);
+            }
+        };
+    }, [isRecording, recorderState]);
+
+    // RESTART RECORDING IF STOPPED
+    useEffect(() => {
+        if (isStopped) {
+            handleLesson();
+            setIsStopped(false);
+        }
+    }, [isStopped]);
 
     return (
         <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
@@ -239,25 +281,23 @@ const CourseChapterModal: React.FC<CourseChapterModalProps> = ({ open, onClose }
                         >
                             {isRecording
                                 ? 'Recording in progress...'
-                                : isPaused
-                                  ? 'Recording paused...'
-                                  : 'Ready to start recording for the selected course and chapter.'}
+                                : 'Ready to start recording for the selected course and chapter.'}
                         </Typography>
                     )}
 
                     {/* Recording Status Indicator */}
-                    {(isRecording || isPaused) && (
+                    {isRecording && (
                         <Box
                             sx={{
                                 display: 'flex',
                                 alignItems: 'center',
                                 gap: 1,
                                 p: 2,
-                                bgcolor: isRecording ? 'error.light' : 'warning.light',
-                                color: isRecording ? 'error.contrastText' : 'warning.contrastText',
+                                bgcolor: 'error.light',
+                                color: 'error.contrastText',
                                 borderRadius: 1,
                                 border: '1px solid',
-                                borderColor: isRecording ? 'error.main' : 'warning.main',
+                                borderColor: 'error.main',
                             }}
                         >
                             <Box
@@ -265,10 +305,8 @@ const CourseChapterModal: React.FC<CourseChapterModalProps> = ({ open, onClose }
                                     width: 12,
                                     height: 12,
                                     borderRadius: '50%',
-                                    bgcolor: isRecording ? 'error.main' : 'warning.main',
-                                    animation: isRecording
-                                        ? 'pulse 1.5s ease-in-out infinite'
-                                        : 'none',
+                                    bgcolor: 'error.main',
+                                    animation: 'pulse 1.5s ease-in-out infinite',
                                     '@keyframes pulse': {
                                         '0%': { opacity: 1 },
                                         '50%': { opacity: 0.5 },
@@ -277,7 +315,7 @@ const CourseChapterModal: React.FC<CourseChapterModalProps> = ({ open, onClose }
                                 }}
                             />
                             <Typography variant="body2" fontWeight="medium">
-                                {isRecording ? 'Recording in progress...' : 'Recording paused...'}
+                                Recording in progress...
                             </Typography>
                         </Box>
                     )}
@@ -286,26 +324,20 @@ const CourseChapterModal: React.FC<CourseChapterModalProps> = ({ open, onClose }
             <DialogActions>
                 <Button onClick={handleClose}>Cancel</Button>
 
-                {/* Pause/Resume Button */}
-                {canPauseResume && (
-                    <Button
-                        onClick={handlePauseResume}
-                        variant="outlined"
-                        color="warning"
-                        disabled={!canPauseResume}
-                    >
-                        {isPaused ? 'Resume Recording' : 'Pause Recording'}
-                    </Button>
-                )}
-
                 {/* Start/Stop Button */}
                 <Button
-                    onClick={handleStartRecord}
-                    variant={canStopRecording ? 'outlined' : 'contained'}
-                    color={canStopRecording ? 'error' : 'primary'}
-                    disabled={!canStartRecording && !canStopRecording}
+                    onClick={
+                        canStartRecording
+                            ? handleLesson
+                            : () => {
+                                  setState(RecorderState.Stopped);
+                              }
+                    }
+                    variant={canStartRecording ? 'contained' : 'outlined'}
+                    color={canStartRecording ? 'primary' : 'error'}
+                    disabled={!selectedCourseId || !selectedChapterId}
                 >
-                    {canStopRecording ? 'Stop Recording' : 'Start Recording'}
+                    {canStartRecording ? 'Start Recording' : 'Stop Recording'}
                 </Button>
             </DialogActions>
         </Dialog>
