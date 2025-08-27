@@ -1,4 +1,4 @@
-import { Box, Stack } from '@mui/material';
+import { Box, Button, Stack, Typography } from '@mui/material';
 import Navbar from './components/Layout/Navbar';
 import { Outlet } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -16,6 +16,12 @@ import { globalSelector, recordManagerSelector, State } from './store/selector';
 import { GlobalState } from './store/global';
 import CourseChapterModal from './components/CourseChapterModal';
 import { RecordManagerState, setModalOpen } from './store/recordManager';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import { Select, Option } from '@mui/joy';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faBook } from '@fortawesome/free-solid-svg-icons';
+import Recorder from './components/Layout/Recorder';
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 
 function App() {
     const { isAuthenticated, isLoading, user, loginWithRedirect, getAccessTokenSilently } =
@@ -24,6 +30,9 @@ function App() {
     const global = useSelector<State, GlobalState>(globalSelector);
     const dispatch = useDispatch();
     const isModalOpen = useSelector<State, RecordManagerState>(recordManagerSelector).isModalOpen;
+
+    // Activer les raccourcis clavier
+    useKeyboardShortcuts();
 
     // const token = useQuery({
     //     queryKey: ["set_token"],
@@ -75,7 +84,9 @@ function App() {
                                 overflowX: 'scroll',
                             }}
                         >
-                            <Header />
+                            <RenderWhen if={!global.lesson.isZoomed}>
+                                <Header />
+                            </RenderWhen>
                             <Stack padding={'30px'} flex={1}>
                                 <Outlet />
                             </Stack>
@@ -89,6 +100,7 @@ function App() {
                         onClose={() => dispatch(setModalOpen(false))}
                     />
                 )}
+                <Recorder />
             </>
         );
     }

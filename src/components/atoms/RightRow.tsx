@@ -8,13 +8,14 @@ import { Page } from '../../interface.global';
 import { CurrentItemId, DirectoryState, setCurrentItem } from '../../store/directory';
 import { Row } from '../../Page/Course/interface.directory';
 import { useNavigate } from 'react-router-dom';
+import { EllipsisText } from './Typography';
 
 interface RightListProps {
     row: Row;
     index: number;
 }
 
-const RightList = ({ row, index }: RightListProps) => {
+const RightRow = ({ row, index }: RightListProps) => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const global = useSelector<State, GlobalState>(globalSelector);
@@ -45,7 +46,7 @@ const RightList = ({ row, index }: RightListProps) => {
                 flex: 1,
                 gap: 1,
                 backgroundColor:
-                    row._id === previousItemId ? (th) => th.palette.background.default : 'initial',
+                    row._id === previousItemId ? (th) => th.palette.grey['900'] : 'initial',
                 cursor: 'pointer',
                 ':hover': {
                     backgroundColor:
@@ -65,18 +66,19 @@ const RightList = ({ row, index }: RightListProps) => {
             >
                 {++index}.
             </Text>
-            <Text
+            <EllipsisText
                 sx={{
                     color:
                         row._id === previousItemId
                             ? (th) => th.palette.background.paper
                             : 'initial',
                 }}
+                title={row.name}
             >
                 {row.name}
-            </Text>
+            </EllipsisText>
         </Box>
     );
 };
 
-export default RightList;
+export default RightRow;

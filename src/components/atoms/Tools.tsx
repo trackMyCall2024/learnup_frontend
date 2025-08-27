@@ -202,7 +202,7 @@ const Tools = ({ section, tools }: ToolsProps) => {
                         tools.startedParty.value ? (
                             <CloseIcon />
                         ) : (
-                            <img src="/icons/analyze.svg" height={10} width={'auto'} />
+                            <img draggable={false} src="/icons/white-analyze.svg" height={10} width={'auto'} />
                         )
                     }
                     disabled={tools.openChat.value}

@@ -6,7 +6,7 @@ import { faChess } from '@fortawesome/free-solid-svg-icons';
 import { faShareNodes } from '@fortawesome/free-solid-svg-icons';
 import { faArrowDown } from '@fortawesome/free-solid-svg-icons';
 import { Text } from './Typography';
-import { GlobalState, RowPage, setNextPage } from '../../store/global';
+import { GlobalState, RowPage, setIsHalfPageIsOpen, setNextPage } from '../../store/global';
 import { slideHalfPageToLeft } from '../../Page/Course/HalfPage';
 import { useDispatch, useSelector } from 'react-redux';
 import { Page } from '../../interface.global';
@@ -76,7 +76,8 @@ const Row = ({ rowType, row }: RowProps) => {
                 if (global.page.current.title === Page.Sections) {
                     handleGoToNext(() => navigate(`/section/${row._id}`));
                 } else {
-                    slideHalfPageToLeft();
+                    dispatch(setIsHalfPageIsOpen(true));
+                    slideHalfPageToLeft(dispatch);
                 }
             }}
         >

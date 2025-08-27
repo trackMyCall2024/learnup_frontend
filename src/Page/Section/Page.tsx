@@ -12,18 +12,18 @@ import { getCapitalizeCase } from '../../utils/utils';
 interface PageProps {
     sectionName: string;
     tools: ToolsState;
-    canDisplayRightNavbar: boolean;
+    pageIsZoomed: boolean;
     ariaValue: string;
-    setCanDisplayRightNavbar: React.Dispatch<React.SetStateAction<boolean>>;
+    setPageIsZoomed: React.Dispatch<React.SetStateAction<boolean>>;
     handleAriaChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
 }
 
 const Page = ({
     sectionName,
     tools,
-    canDisplayRightNavbar,
+    pageIsZoomed,
     ariaValue,
-    setCanDisplayRightNavbar,
+    setPageIsZoomed,
     handleAriaChange,
 }: PageProps) => {
     return (
@@ -51,9 +51,9 @@ const Page = ({
                         gap={2}
                     >
                         <FileAction size="sm" />
-                        <CustomBtn onClick={() => setCanDisplayRightNavbar(!canDisplayRightNavbar)}>
-                            {canDisplayRightNavbar ? (
-                                <ZoomOutMapIcon
+                        <CustomBtn onClick={() => setPageIsZoomed(!pageIsZoomed)}>
+                            {pageIsZoomed ? (
+                                <ZoomInMapIcon
                                     fontSize="small"
                                     sx={{
                                         cursor: 'pointer',
@@ -61,7 +61,7 @@ const Page = ({
                                     }}
                                 />
                             ) : (
-                                <ZoomInMapIcon
+                                <ZoomOutMapIcon
                                     fontSize="small"
                                     sx={{
                                         cursor: 'pointer',

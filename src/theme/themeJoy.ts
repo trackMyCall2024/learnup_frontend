@@ -13,13 +13,21 @@ interface ColorOptions {
     900?: string;
 }
 
+interface White {
+    light: string;
+    main: string;
+    dark: string;
+}
+
 declare module '@mui/joy/styles' {
     interface Palette {
         grey?: ColorOptions;
+        white?: White;
     }
 
     interface PaletteOptions {
         grey?: ColorOptions;
+        white?: White;
     }
 }
 
@@ -34,10 +42,15 @@ export const themeJoy = extendTheme({
                     '300': '#d9d9d9',
                     '400': '#d6d6d6',
                     '500': '#D4D4D4',
-                    '600': '#a9a9a9',
+                    '600': '#919190',
                     '700': '#7e7e7e',
                     '800': '#535353',
                     '900': '#2b2b2b',
+                },
+                white: {
+                    light: '#FFFFFF',
+                    main: '#FEFEFE',
+                    dark: '#EAEAEA',
                 },
                 text: {
                     primary: '#111111',
@@ -55,9 +68,9 @@ export const themeJoy = extendTheme({
                     '400': '#AAAAAA', // ← ton gris moyen
                     '500': '#888888',
                     '600': '#535353',
-                    '700': '#313131', // ← ton gris foncé
+                    '700': '#272727', // ← ton gris foncé
                     '800': '#1f1f1f',
-                    '900': '#171717', // ← ton gris très foncé
+                    '900': '#1B1C1C', // ← ton gris très foncé
                 },
             },
         },
@@ -89,6 +102,7 @@ export const themeJoy = extendTheme({
         JoyTextarea: {
             styleOverrides: {
                 root: {
+                    textAlign: 'justify',
                     border: 'none',
                     outline: 'none',
                     boxShadow: 'none',
@@ -109,6 +123,7 @@ export const themeJoy = extendTheme({
                     },
                 },
                 textarea: {
+                    textAlign: 'justify',
                     border: 'none',
                     outline: 'none',
                     boxShadow: 'none',

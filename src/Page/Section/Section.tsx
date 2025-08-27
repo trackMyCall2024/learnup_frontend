@@ -25,6 +25,10 @@ import {
     ResumeResponse,
 } from '../../protocol/api.type';
 import { log } from 'console';
+import { State } from '../../store/selector';
+import { GlobalState, setIsLessonZoomed } from '../../store/global';
+import { globalSelector } from '../../store/selector';
+import { useDispatch, useSelector } from 'react-redux';
 
 const Section = () => {
     // QUERY
@@ -75,10 +79,11 @@ const Section = () => {
     const [view, setView] = useState<View>(View.Pages);
     const [selectedGame, setSelectedGame] = useState<SelectedGame>(SelectedGame.Quiz);
 
+    const global = useSelector<State, GlobalState>(globalSelector);
+    const dispatch = useDispatch();
     const isLoading = resumeRequest.isLoading || noteRequest.isLoading || chatRequest.isLoading;
 
     // GLOBAL LOCAL STATES
-    const [canDisplayRightNavbar, setCanDisplayRightNavbar] = useState<boolean>(true);
     const [isLargeChat, setIsLargeChat] = useState<boolean>(false);
 
     const handleAriaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -205,9 +210,9 @@ const Section = () => {
                                 <Page
                                     sectionName={sectionData?.name as string}
                                     tools={tools}
-                                    canDisplayRightNavbar={canDisplayRightNavbar}
+                                    pageIsZoomed={global.lesson.isZoomed}
                                     ariaValue={ariaValue}
-                                    setCanDisplayRightNavbar={setCanDisplayRightNavbar}
+                                    setPageIsZoomed={() => dispatch(setIsLessonZoomed(!global.lesson.isZoomed))}
                                     handleAriaChange={handleAriaChange}
                                 />
                             </RenderWhen>
@@ -223,7 +228,7 @@ const Section = () => {
                     </Stack>
                 </RenderWhen>
             </Stack>
-            <RenderWhen if={canDisplayRightNavbar && !isLargeChat}>
+            <RenderWhen if={!global.lesson.isZoomed && !isLargeChat}>
                 <RightNavbar section={sectionData} tools={tools} />
             </RenderWhen>
         </Stack>

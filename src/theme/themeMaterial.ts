@@ -5,13 +5,21 @@ interface Purple {
     main: string;
 }
 
+interface White {
+    light: string;
+    main: string;
+    dark: string;
+}
+
 declare module '@mui/material/styles' {
     interface Palette {
         purple: Purple;
+        white: White;
     }
 
     interface PaletteOptions {
         purple?: Purple;
+        white?: White;
     }
 }
 
@@ -31,23 +39,24 @@ export let themeMui = createTheme({
             light: '#f7f7f7',
             main: '#D4D4D4',
         },
+        white: {
+            light: '#FFFFFF',
+            main: '#FEFEFE',
+            dark: '#EAEAEA',
+        },
         text: {
             primary: '#111111',
             secondary: '#111111',
         },
-        // info: {
-        //     main: "#4270A7",
-        //     contrastText: "#fff",
-        // },
-        // warning: {
-        //     main: "#F59C0C",
-        //     contrastText: "#fff",
-        // },
-        // error: {
-        //     light: "#E09B97",
-        //     main: "#A74242",
-        //     contrastText: "#fff",
-        // },
+        warning: {
+            main: "#F59C0C",
+            contrastText: "#FEFEFE",
+        },
+        error: {
+            light: "#E64B4B",
+            main: "#AE0000",
+            contrastText: "#FEFEFE",
+        },
         grey: {
             '50': '#FAFAFA',
             '100': '#F5F5F5',
@@ -55,10 +64,10 @@ export let themeMui = createTheme({
             '300': '#CCCCCC', // ← ton gris clair
             '400': '#AAAAAA', // ← ton gris moyen
             '500': '#888888',
-            '600': '#535353',
-            '700': '#313131', // ← ton gris foncé
+            '600': '#919190',
+            '700': '#272727', // ← ton gris foncé
             '800': '#1f1f1f',
-            '900': '#171717', // ← ton gris très foncé
+            '900': '#1B1C1C', // ← ton gris très foncé
         },
         info: {
             main: '#111111',

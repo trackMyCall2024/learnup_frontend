@@ -1,14 +1,14 @@
 import {
     Box,
+    Button,
     List,
     ListItem,
     ListItemButton,
     ListItemIcon,
     ListItemText,
     Stack,
-    Typography,
+    Switch,
 } from '@mui/material';
-import React from 'react';
 import { Link } from 'react-router-dom';
 import { faGraduationCap } from '@fortawesome/free-solid-svg-icons';
 import { faBook } from '@fortawesome/free-solid-svg-icons';
@@ -18,11 +18,18 @@ import { faGear } from '@fortawesome/free-solid-svg-icons';
 import { faBan } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useDispatch, useSelector } from 'react-redux';
-import { GlobalState, setCurrentPage } from '../../store/global';
+import {
+    GlobalState,
+    setCurrentPage,
+    setIsRecorderOpen,
+} from '../../store/global';
 import { globalSelector, State, userSelector } from '../../store/selector';
 import { UserState } from '../../store/user';
-import Ellipsis from '../atoms/Ellipsis';
 import { Page } from '../../interface.global';
+import Ellipsis from '../atoms/Ellipsis';
+import { useEffect, useRef } from 'react';
+import gsap from 'gsap';
+import BtnExpandNavbar from '../atoms/BtnExpandNavbar';
 
 const Navbar = () => {
     const dispatch = useDispatch();
@@ -30,21 +37,89 @@ const Navbar = () => {
     const user = useSelector<State, UserState>(userSelector);
 
     const name = `${user.firstname} ${user.lastname}`;
+    const navbarRef = useRef<HTMLDivElement>(null);
+    const boxRef = useRef<HTMLDivElement>(null);
+    const listRef = useRef<HTMLUListElement>(null);
+
+    const fixWidth = '240px';
+
+    useEffect(() => {
+        if (!global.navbar.isEnlarged) {
+            // Animation fluide : réduire la largeur à 0px
+            gsap.to(navbarRef.current, {
+                width: '0px',
+                duration: 0.2,
+                ease: 'power2.inOut',
+                onComplete: () => {
+                    if (navbarRef.current) {
+                        // navbarRef.current.style.display = 'none';
+                    }
+                },
+            });
+
+            // Second animation
+            // Animer les éléments internes (btn, box, list) avec opacité 0 en 0.2s
+            gsap.to(['#btn-expand-navbar', boxRef.current, listRef.current], {
+                opacity: 0,
+                duration: 0.2,
+                ease: 'power2.inOut',
+                onComplete: () => {
+                    if (boxRef.current) boxRef.current.style.display = 'none';
+                    if (listRef.current) listRef.current.style.display = 'none';
+                },
+            });
+
+            gsap.to(navbarRef.current, {
+                paddingLeft: '0px',
+                paddingRight: '0px',
+                duration: 0.2,
+                ease: 'power2.inOut',
+            });
+        } else {
+            // Réinitialiser la largeur quand la navbar est agrandie
+            if (navbarRef.current) {
+                gsap.to(navbarRef.current, {
+                    width: fixWidth,
+                    duration: 0.2,
+                    ease: 'power2.inOut',
+                    display: 'flex',
+                    paddingLeft: '16px',
+                    paddingRight: '16px',
+                    onComplete: () => {
+                        gsap.to(['#btn-expand-navbar', boxRef.current, listRef.current], {
+                            opacity: 1,
+                            display: 'flex',
+                            duration: 0.1,
+                            ease: 'power2.inOut',
+                        });
+                    },
+                });
+            }
+        }
+    }, [global.navbar.isEnlarged]);
 
     return (
         <Stack
             height={'100vh'}
-            minWidth={'280px'}
+            width={fixWidth}
+            display={'flex'}
             flexDirection={'column'}
             alignItems={'center'}
-            sx={{ backgroundColor: (theme) => theme.palette.background.default }}
+            px={2}
+            sx={{
+                backgroundColor: (theme) => theme.palette.background.default,
+                position: 'relative',
+                overflow: 'hidden',
+            }}
+            ref={navbarRef}
         >
+            <BtnExpandNavbar />
             <Box
+                ref={boxRef}
                 sx={{
                     height: 60,
-                    maxWidth: '75%',
-                    my: 4,
-                    px: 2,
+                    width: '100%',
+                    my: 2,
                     backgroundColor: '#1D1D1D',
                     borderRadius: 2,
                     border: (th) => `1px solid ${th.palette.grey['700']}`,
@@ -52,6 +127,7 @@ const Navbar = () => {
                     display: 'flex',
                     flexDirection: 'row',
                     alignItems: 'center',
+                    justifyContent: 'center',
                 }}
             >
                 <Stack
@@ -87,9 +163,10 @@ const Navbar = () => {
                 </Stack>
             </Box>
             <List
+                ref={listRef}
                 sx={{
                     borderRadius: 10,
-                    width: '85%',
+                    width: '100%',
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'center',
@@ -151,6 +228,19 @@ const Navbar = () => {
                     );
                 })}
             </List>
+            <Box
+                sx={{ width: '100%', display: 'flex', justifyContent: 'flex-start' }}
+            >
+                <Switch
+                    defaultChecked={global.recorder.isOpen}
+                    onChange={() => dispatch(setIsRecorderOpen(!global.recorder.isOpen))}
+                    sx={{
+                        '& .MuiSwitch-track': {
+                            backgroundColor: (th) => th.palette.white.light,
+                        },
+                    }}
+                />
+            </Box>
         </Stack>
     );
 };

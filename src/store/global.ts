@@ -11,15 +11,43 @@ export interface GlobalState {
         };
         previous: {
             _id: string; // Previous course ID, chapter ID, section ID to get data
-            title: Page| RowPage | null;
+            title: Page | RowPage | null;
         };
         next: {
             _id: string; // Next course ID, chapter ID, section ID to get data
-            title: Page| RowPage | null;
+            title: Page | RowPage | null;
             isOpen: boolean;
         };
+        isHalfPageIsOpen: boolean;
+    };
+    navbar: {
+        isEnlarged: boolean;
+    };
+    lesson: {
+        isZoomed: boolean;
+    };
+    recorder: {
+        isOpen: boolean;
     };
 }
+
+// Fonction pour charger les données du localStorage
+const loadRecorderFromStorage = () => {
+    try {
+        const stored = localStorage.getItem('recorderModal');
+        if (stored) {
+            const parsed = JSON.parse(stored);
+            return {
+                isOpen: parsed.isOpen ?? true,
+            };
+        }
+    } catch (error) {
+        console.warn('Erreur lors du chargement du localStorage:', error);
+    }
+    return {
+        isOpen: true,
+    };
+};
 
 const initialState: GlobalState = {
     page: {
@@ -35,7 +63,15 @@ const initialState: GlobalState = {
             title: null,
             isOpen: false,
         },
+        isHalfPageIsOpen: false,
     },
+    navbar: {
+        isEnlarged: true,
+    },
+    lesson: {
+        isZoomed: false,
+    },
+    recorder: loadRecorderFromStorage(),
 };
 
 export type RowPage = Page.Courses | Page.Chapters | Page.Sections;
@@ -57,13 +93,62 @@ export const userSlice = createSlice({
             state.page.next = action.payload;
             return state;
         },
-        setPreviousPage: (state: GlobalState, action: PayloadAction<GlobalState['page']['previous']>) => {
+        setPreviousPage: (
+            state: GlobalState,
+            action: PayloadAction<GlobalState['page']['previous']>,
+        ) => {
             state.page.previous = action.payload;
+            return state;
+        },
+        setNavbarEnlarged: (
+            state: GlobalState,
+            action: PayloadAction<GlobalState['navbar']['isEnlarged']>,
+        ) => {
+            state.navbar.isEnlarged = action.payload;
+            return state;
+        },
+        setIsHalfPageIsOpen: (
+            state: GlobalState,
+            action: PayloadAction<GlobalState['page']['isHalfPageIsOpen']>,
+        ) => {
+            state.page.isHalfPageIsOpen = action.payload;
+            return state;
+        },
+        setIsLessonZoomed: (
+            state: GlobalState,
+            action: PayloadAction<GlobalState['lesson']['isZoomed']>,
+        ) => {
+            state.lesson.isZoomed = action.payload;
+            return state;
+        },
+        setIsRecorderOpen: (
+            state: GlobalState,
+            action: PayloadAction<GlobalState['recorder']['isOpen']>,
+        ) => {
+            state.recorder.isOpen = action.payload;
+            // Sauvegarder en localStorage
+            try {
+                const stored = localStorage.getItem('recorderModal')
+                    ? JSON.parse(localStorage.getItem('recorderModal')!)
+                    : {};
+                const updated = { ...stored, isOpen: action.payload };
+                localStorage.setItem('recorderModal', JSON.stringify(updated));
+            } catch (error) {
+                console.warn('Erreur lors de la sauvegarde en localStorage:', error);
+            }
             return state;
         },
     },
 });
 
-export const { setCurrentPage, setNextPage, setPreviousPage } = userSlice.actions;
+export const {
+    setCurrentPage,
+    setNextPage,
+    setPreviousPage,
+    setNavbarEnlarged,
+    setIsHalfPageIsOpen,
+    setIsLessonZoomed,
+    setIsRecorderOpen,
+} = userSlice.actions;
 
 export default userSlice.reducer;

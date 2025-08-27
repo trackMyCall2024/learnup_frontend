@@ -1,6 +1,6 @@
 import { Stack } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
-import { GlobalState, setNextPage } from '../../store/global';
+import { GlobalState, setIsHalfPageIsOpen, setNextPage } from '../../store/global';
 import gsap from 'gsap';
 import { useNavigate } from 'react-router-dom';
 import { Page } from '../../interface.global';
@@ -12,8 +12,10 @@ import { CurrentItemId, DirectoryState, setCurrentItem } from '../../store/direc
 import { putHistory } from '../../protocol/api';
 import { UserState } from '../../store/user';
 import { usePage } from '../../hooks/usePage';
+import { Dispatch } from 'react';
 
-export function slideHalfPageToLeft() {
+export function slideHalfPageToLeft(dispatch: Dispatch<any>) {
+    dispatch(setIsHalfPageIsOpen(false));   
     gsap.to('#halfPage', {
         translateX: '0%',
         duration: 1,
@@ -38,6 +40,9 @@ const HalfPage = () => {
     });
 
     function slideHalfPageToRight() {
+        dispatch(setIsHalfPageIsOpen(false));
+        console.log('slideHalfPageToRight');
+
         gsap.to('#halfPage', {
             translateX: '100%',
             duration: 0.4,
@@ -85,7 +90,7 @@ const HalfPage = () => {
                     halfPageIsOpen={true}
                     idFromHalfPage={global.page.next._id}
                     headerFromHalfPage={
-                        <Header titleFromHalfPage={global.page.next.title as Page} />
+                        <Header titleFromHalfPage={global.page.next.title as Page} isHalfPageIsOpen={true} />
                     }
                 />
             </Stack>
