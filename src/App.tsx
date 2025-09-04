@@ -23,6 +23,7 @@ import { faBook } from '@fortawesome/free-solid-svg-icons';
 import Recorder from './components/Layout/Recorder';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import DeleteModal from './components/Layout/DeleteModal';
+import { useNavigation } from './hooks/useNavigation';
 
 function App() {
     const { isAuthenticated, isLoading, user, loginWithRedirect, getAccessTokenSilently } =
@@ -34,6 +35,9 @@ function App() {
 
     // Activer les raccourcis clavier
     useKeyboardShortcuts();
+
+    // Activer la synchronisation de navigation
+    useNavigation();
 
     // const token = useQuery({
     //     queryKey: ["set_token"],

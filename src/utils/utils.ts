@@ -14,7 +14,9 @@ export const getCapitalizeCase = (text?: string): string => {
 };
 
 export const getController = (currentPage: string) => {
-    const pageElement = pages.find((page) => page.name.toLowerCase() === currentPage?.toLowerCase());
+    const pageElement = pages.find(
+        (page) => page.name.toLowerCase() === currentPage?.toLowerCase(),
+    );
     return pageElement?.controller;
 };
 
@@ -67,5 +69,29 @@ export function getPageName(currentPage: Page) {
             return 'Chapter';
         case Page.Sections:
             return 'Section';
+    }
+}
+
+export function goToPrevious() {
+    window.history.back();
+}
+
+export function goToNext() {
+    window.history.forward();
+}
+
+export function getDirectoryByPage(page: string): DirectoryType {
+    switch (page) {
+        case Page.Courses.toLowerCase():
+            return DirectoryType.Course;
+
+        case Page.Chapters.toLowerCase():
+            return DirectoryType.Chapter;
+
+        case Page.Sections.toLowerCase():
+            return DirectoryType.Section;
+
+        default:
+            return DirectoryType.Course;
     }
 }

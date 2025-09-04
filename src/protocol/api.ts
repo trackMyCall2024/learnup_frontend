@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { Auth0Client, User } from '@auth0/auth0-spa-js';
-import { Row } from '../Page/Course/interface.directory';
+import { DirectoryType, Row } from '../Page/Course/interface.directory';
 import { Page } from '../Page/Section/interface.type';
 import { HistoryType } from '../components/atoms/Row';
 import {
@@ -96,6 +96,7 @@ export const putHistory = async (historyType: string, historyId: string, filterI
 // FETCH ONE DIRECTORY
 export const getDirectory = async (parentId: string) => {
     const res = await nestServer.get<DirectoryResponse>(`directory/${parentId}`);
+    console.log('@@res', res.data);
     return res.data;
 };
 

@@ -5,23 +5,20 @@ import { Button as ButtonJoy } from '@mui/joy';
 import { faTrash, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { deleteDirectory } from '../../protocol/api';
-import { usePage } from '../../hooks/usePage';
+import { useNavigation } from '../../hooks/useNavigation';
 
 const DeleteModal = () => {
     const global = useSelector((state: { global: GlobalState }) => state.global);
-    const { handleGoToPrevious } = usePage();
     const dispatch = useDispatch();
-    console.log(global);
+
+    const { navigateBack } = useNavigation();
 
     const handleDelete = async () => {
         dispatch(setDeleteModalIsLoading(true));
-        const timeout = setTimeout(() => {
-            dispatch(setDeleteModalIsLoading(false));
-            dispatch(setDeleteModalClose());
-        }, 3000);
         await deleteDirectory(global.deleteModal.content._id);
-        handleGoToPrevious();
-        return () => clearTimeout(timeout);
+        dispatch(setDeleteModalIsLoading(false));
+        dispatch(setDeleteModalClose());
+        navigateBack();
     };
 
     const handleCancel = () => {
@@ -60,8 +57,8 @@ const DeleteModal = () => {
                     Are you sure you ?
                 </Typography>
                 <Typography sx={{ mt: 2, color: (theme) => theme.palette.white.main }}>
-                    This action cannot be undone. Do you want to delete the {global.deleteModal.content.type}{' '}
-                    {global.deleteModal.content.name} ?
+                    This action cannot be undone. Do you want to delete the{' '}
+                    {global.deleteModal.content.type} {global.deleteModal.content.name} ?
                 </Typography>
                 <Stack direction="column" spacing={2} sx={{ mt: 2 }}>
                     <ButtonJoy

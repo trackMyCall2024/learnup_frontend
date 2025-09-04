@@ -17,8 +17,10 @@ import {
 } from '../../store/global';
 import { useDispatch, useSelector } from 'react-redux';
 import { DirectoryType } from '../../Page/Course/interface.directory';
-import { getDirectoryType, getPageName } from '../../utils/utils';
+import { getDirectoryByPage, getDirectoryType, getPageName } from '../../utils/utils';
 import { Page } from '../../interface.global';
+import { useQuery } from '@tanstack/react-query';
+import { getDirectory } from '../../protocol/api';
 
 const CustomMenu = () => {
     const dispatch = useDispatch();
@@ -26,6 +28,20 @@ const CustomMenu = () => {
     const [selectedIndex, setSelectedIndex] = React.useState(0); // Changé de 1 à 0
     const global = useSelector((state: { global: GlobalState }) => state.global);
     const open = Boolean(anchorEl);
+
+    const directoryType = getDirectoryByPage(window.location.pathname.split('/')?.[1]);
+    const childId = window.location.pathname.split('/').pop();
+
+    console.log('@@@@directoryType', directoryType);
+    console.log('@@@@childId', childId);
+
+    const { data: parentDirectory } = useQuery({
+        queryKey: ['parentDirectory'],
+        queryFn: () => getDirectory(childId as string),
+
+        enabled: !!childId && !!directoryType,
+    });
+
     const handleClickListItem = (event: React.MouseEvent<HTMLElement>) => {
         setAnchorEl(event.currentTarget);
     };
@@ -45,9 +61,9 @@ const CustomMenu = () => {
         console.log('global.page.previous.title', global.page.previous.title);
         dispatch(
             setDeleteModal({
-                _id: '1',
-                name: 'Test',
-                type: getDirectoryType(global.page.previous.title as Page),
+                _id: parentDirectory?._id as string,
+                name: parentDirectory?.name as string,
+                type: parentDirectory?.type as DirectoryType,
             }),
         );
         dispatch(setDeleteModalOpen(true));
