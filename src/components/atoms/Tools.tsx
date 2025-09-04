@@ -2,7 +2,7 @@ import { Button, Stack } from '@mui/material';
 import { Text } from './Typography';
 import CustomBtn from './CustomBtn';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faComment, faFileLines, faListUl, faPenToSquare } from '@fortawesome/free-solid-svg-icons';
+import { faComment, faFileLines, faListUl, faPenToSquare, faPlus } from '@fortawesome/free-solid-svg-icons';
 import ToolBox from './ToolBox';
 import { SectionProps, SelectedGame, View } from '../../Page/Section/interface.type';
 import { Option, Select } from '@mui/joy';
@@ -35,6 +35,7 @@ export interface ToolsState {
         value: SelectedGame;
         set: React.Dispatch<React.SetStateAction<SelectedGame>>;
     };
+    addPage: () => void;
 }
 
 interface ToolsProps {
@@ -63,7 +64,8 @@ const Tools = ({ section, tools }: ToolsProps) => {
             display={'flex'}
             flexDirection={'column'}
             justifyContent={'space-between'}
-            p={0.5}
+            height={'-webkit-fill-available'}
+            px={0.5}
             gap={2}
             flex={1}
         >
@@ -114,6 +116,8 @@ const Tools = ({ section, tools }: ToolsProps) => {
                         <CustomBtn
                             key={i}
                             sx={{
+                                // minWidth: '40px',
+                                // minHeight: '46px',
                                 backgroundColor: (th) =>
                                     tools.pageIndex.value === i
                                         ? th.palette.background.default
@@ -143,6 +147,15 @@ const Tools = ({ section, tools }: ToolsProps) => {
                             </Text>
                         </CustomBtn>
                     ))}
+                    <CustomBtn
+                        sx={{
+                            backgroundColor: 'initial',
+                            p: '10px',
+                        }}
+                        onClick={tools.addPage}
+                    >
+                        <FontAwesomeIcon icon={faPlus} />
+                    </CustomBtn>
                 </Stack>
             </ToolBox>
 

@@ -11,12 +11,12 @@ const CustomBtn = ({ children, sx, onClick }: CustomBtnProps) => {
     return (
         <Box
             sx={{
-                ...sx,
                 p: 1,
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                ...sx,
             }}
             onClick={onClick}
         >

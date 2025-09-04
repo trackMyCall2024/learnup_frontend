@@ -58,3 +58,14 @@ export function getDirectoryType(currentPage: string): DirectoryType {
             return DirectoryType.Course;
     }
 }
+
+export function getPageName(currentPage: Page) {
+    switch (currentPage) {
+        case Page.Courses:
+            return 'Course';
+        case Page.Chapters:
+            return 'Chapter';
+        case Page.Sections:
+            return 'Section';
+    }
+}

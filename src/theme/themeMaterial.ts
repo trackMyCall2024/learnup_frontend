@@ -109,5 +109,16 @@ export let themeMui = createTheme({
                 }),
             },
         },
+        MuiButton: {
+            styleOverrides: {
+                root: ({ theme }) => ({
+                    borderRadius: 2,
+                    '&.Mui-disabled': {
+                        backgroundColor: theme.palette.grey[300],
+                        color: theme.palette.grey[500],
+                    },
+                }),
+            },
+        },
     },
 });

@@ -41,13 +41,13 @@ export interface ChatResponse extends MongoDBObjectId {
 export interface DirectoryResponse extends MongoDBObjectId {
     parentID: string;
     name: string;
-    logo: string;
+    logo: string | undefined;
     type: DirectoryType;
 }
 
 export interface DirectoryRequest {
     parentID: string;
     name: string;
-    logo: string;
+    logo: string | undefined;
     type: DirectoryType;
 }

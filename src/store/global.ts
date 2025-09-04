@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Page } from '../interface.global';
+import { DirectoryType } from '../Page/Course/interface.directory';
 
 const path = `${window.location.origin}${window.location.pathname}`;
 const currentPage = path.split('/')[3] ?? Page.Dashboard;
@@ -28,6 +29,15 @@ export interface GlobalState {
     };
     recorder: {
         isOpen: boolean;
+    };
+    deleteModal: {
+        isOpen: boolean;
+        isLoading: boolean;
+        content: {
+            _id: string;
+            name: string;
+            type: DirectoryType;
+        }
     };
 }
 
@@ -72,6 +82,15 @@ const initialState: GlobalState = {
         isZoomed: false,
     },
     recorder: loadRecorderFromStorage(),
+    deleteModal: {
+        isOpen: false,
+        isLoading: false,
+        content: {
+            _id: '',
+            name: '',
+            type: DirectoryType.Course,
+        },
+    },
 };
 
 export type RowPage = Page.Courses | Page.Chapters | Page.Sections;
@@ -138,6 +157,30 @@ export const userSlice = createSlice({
             }
             return state;
         },
+        setDeleteModal: (
+            state: GlobalState,
+            action: PayloadAction<GlobalState['deleteModal']['content']>,
+        ) => {
+            state.deleteModal.content = action.payload;
+            return state;
+        },
+        setDeleteModalOpen: (state: GlobalState, action: PayloadAction<GlobalState['deleteModal']['isOpen']>) => {
+            state.deleteModal.isOpen = action.payload;
+            return state;
+        },
+        setDeleteModalClose: (state: GlobalState) => {
+            state.deleteModal.isOpen = false;
+            state.deleteModal.content = {
+                _id: '',
+                name: '',
+                type: DirectoryType.Course,
+            };
+            return state;
+        },
+        setDeleteModalIsLoading: (state: GlobalState, action: PayloadAction<GlobalState['deleteModal']['isLoading']>) => {
+            state.deleteModal.isLoading = action.payload;
+            return state;
+        },
     },
 });
 
@@ -149,6 +192,10 @@ export const {
     setIsHalfPageIsOpen,
     setIsLessonZoomed,
     setIsRecorderOpen,
+    setDeleteModal,
+    setDeleteModalOpen,
+    setDeleteModalClose,
+    setDeleteModalIsLoading,
 } = userSlice.actions;
 
 export default userSlice.reducer;

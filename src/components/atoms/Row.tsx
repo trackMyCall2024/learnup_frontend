@@ -7,7 +7,6 @@ import { faShareNodes } from '@fortawesome/free-solid-svg-icons';
 import { faArrowDown } from '@fortawesome/free-solid-svg-icons';
 import { Text } from './Typography';
 import { GlobalState, RowPage, setIsHalfPageIsOpen, setNextPage } from '../../store/global';
-import { slideHalfPageToLeft } from '../../Page/Course/HalfPage';
 import { useDispatch, useSelector } from 'react-redux';
 import { Page } from '../../interface.global';
 import { globalSelector, State } from '../../store/selector';
@@ -41,6 +40,32 @@ const Row = ({ rowType, row }: RowProps) => {
     const global = useSelector<State, GlobalState>(globalSelector);
     const historyType = global.page.current.title as string;
 
+    const handleClick = () => {
+        dispatch(
+            setNextPage({
+                _id: row._id,
+                title: getNextPage(global.page.current.title) as RowPage,
+                isOpen: global.page.current.title === Page.Sections ? false : true,
+            }),
+            dispatch(
+                setCurrentHistory({
+                    type: historyType,
+                    data: row,
+                }),
+            ),
+            dispatch(
+                setCurrentItem({
+                    [global.page.current.title]: row._id,
+                }),
+            ),
+        );
+        if (global.page.current.title === Page.Sections) {
+            handleGoToNext(() => navigate(`/section/${row._id}`));
+        } else {
+            dispatch(setIsHalfPageIsOpen(true));
+        }
+    };
+
     return (
         <Box
             sx={{
@@ -49,36 +74,16 @@ const Row = ({ rowType, row }: RowProps) => {
                 alignItems: 'center',
                 justifyContent: rowType === RowType.List ? 'space-between' : 'flex-start',
                 width: rowType === RowType.List ? '-webkit-fill-available' : '30%',
-                cursor: 'pointer',
+                cursor: global.page.next.isOpen ? 'default' : 'pointer',
                 ':hover': {
-                    backgroundColor: 'rgba(250, 250, 250, 0.7)',
+                    backgroundColor: global.page.next.isOpen ? 'initial' : 'rgba(250, 250, 250, 0.7)',
                 },
             }}
             onClick={() => {
-                dispatch(
-                    setNextPage({
-                        _id: row._id,
-                        title: getNextPage(global.page.current.title) as RowPage,
-                        isOpen: global.page.current.title === Page.Sections ? false : true,
-                    }),
-                    dispatch(
-                        setCurrentHistory({
-                            type: historyType,
-                            data: row,
-                        }),
-                    ),
-                    dispatch(
-                        setCurrentItem({
-                            [global.page.current.title]: row._id,
-                        }),
-                    ),
-                );
-                if (global.page.current.title === Page.Sections) {
-                    handleGoToNext(() => navigate(`/section/${row._id}`));
-                } else {
-                    dispatch(setIsHalfPageIsOpen(true));
-                    slideHalfPageToLeft(dispatch);
+                if (global.page.next.isOpen) {
+                    return;
                 }
+                handleClick();
             }}
         >
             <Stack

@@ -5,9 +5,11 @@ import StopIcon from '@mui/icons-material/Stop';
 const BtnRecorder = ({
     onClick,
     isRecording,
+    disabled,
 }: {
     onClick: () => void;
     isRecording: boolean;
+    disabled: boolean;
 }) => (
     <Button
         size="small"
@@ -30,6 +32,7 @@ const BtnRecorder = ({
             },
         }}
         onClick={onClick}
+        disabled={disabled}
     >
         {isRecording ? 'Stop recording' : 'Start recording'}
     </Button>

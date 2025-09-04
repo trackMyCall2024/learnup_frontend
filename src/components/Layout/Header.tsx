@@ -1,15 +1,24 @@
 import { Box, Stack, Button } from '@mui/material';
 import { H1 } from '../atoms/Typography';
 import { useSelector, useDispatch } from 'react-redux';
-import { globalSelector, State } from '../../store/selector';
-import { GlobalState } from '../../store/global';
+import { directorySelector, globalSelector, State, userSelector } from '../../store/selector';
+import { GlobalState, setIsHalfPageIsOpen } from '../../store/global';
 import { Page } from '../../interface.global';
 import { getCapitalizeCase } from '../../utils/utils';
+import { faAnglesLeft, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
+import { usePage } from '../../hooks/usePage';
 import { setModalOpen } from '../../store/recordManager';
 import BtnExpandNavbar from '../atoms/BtnExpandNavbar';
 import RenderWhen from '../atoms/RenderWhen';
 import gsap from 'gsap';
 import { useEffect } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { useNavigate } from 'react-router-dom';
+import { putHistory } from '../../protocol/api';
+import { useMutation } from '@tanstack/react-query';
+import { UserState } from '../../store/user';
+import { DirectoryState } from '../../store/directory';
+import CustomMenu from '../atoms/CustomMenu';
 
 interface HeaderProps {
     titleFromHalfPage?: Page;
@@ -18,10 +27,23 @@ interface HeaderProps {
 
 const Header = ({ titleFromHalfPage, isHalfPageIsOpen }: HeaderProps) => {
     const global = useSelector<State, GlobalState>(globalSelector);
+    const user = useSelector<State, UserState>(userSelector);
+    const directory = useSelector<State, DirectoryState>(directorySelector);
     const dispatch = useDispatch();
+    const navigate = useNavigate();
+    const { handleGoToNext } = usePage();
 
-    const handleOpenModal = () => {
-        dispatch(setModalOpen(true));
+    const history = directory.history.current;
+
+    const handlePutHistory = useMutation({
+        mutationFn: () =>
+            putHistory(history?.type as string, history?.data._id as string, user._id),
+    });
+
+    const onEnd = () => {
+        const nextPage = `${global.page.next.title}` as Page;
+        navigate(`${nextPage}/${global.page.next._id}`);
+        handlePutHistory.mutate();
     };
 
     useEffect(() => {
@@ -48,6 +70,8 @@ const Header = ({ titleFromHalfPage, isHalfPageIsOpen }: HeaderProps) => {
         }
     }, [global.navbar.isEnlarged]);
 
+    console.log('global.page.current.title', global.page.current.title);
+
     return (
         <Stack
             minHeight={75}
@@ -61,31 +85,54 @@ const Header = ({ titleFromHalfPage, isHalfPageIsOpen }: HeaderProps) => {
             justifyContent={'flex-start'}
             alignItems={'center'}
         >
+            <RenderWhen
+                if={
+                    global.page.current.title === Page.Chapters ||
+                    global.page.current.title === Page.Sections ||
+                    global.page.current.title === Page.Section
+                }
+            >
+                <CustomMenu />
+            </RenderWhen>
             <RenderWhen if={!isHalfPageIsOpen}>
                 <BtnExpandNavbar isHeader={true} />
+            </RenderWhen>
+            <RenderWhen if={isHalfPageIsOpen}>
+                <Button
+                    color="info"
+                    variant="contained"
+                    startIcon={
+                        <FontAwesomeIcon
+                            icon={faAnglesLeft}
+                            size="sm"
+                            style={{
+                                marginRight: '0px',
+                                marginLeft: '10px',
+                                fontSize: '14px',
+                            }}
+                        />
+                    }
+                    sx={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        minWidth: '40px',
+                        minHeight: '25px',
+                        padding: 0,
+                        borderRadius: 2,
+                        marginRight: 2,
+                    }}
+                    onClick={() => {
+                        dispatch(setIsHalfPageIsOpen(false));
+                        handleGoToNext(onEnd);
+                    }}
+                ></Button>
             </RenderWhen>
             <H1>
                 {titleFromHalfPage
                     ? getCapitalizeCase(titleFromHalfPage as string)
                     : getCapitalizeCase(global.page.current.title)}
             </H1>
-            {/* <Stack direction="row" spacing={2} alignItems="center">
-                <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={handleOpenModal}
-                    sx={{ visibility: titleFromHalfPage ? 'hidden' : 'visible' }}
-                >
-                    Start Recording
-                </Button>
-                <Box
-                    height={75}
-                    width={75}
-                    sx={{ visibility: titleFromHalfPage ? 'hidden' : 'visible' }}
-                >
-                    <img src="https://i.ibb.co/qLdPSqsT/logo.jpg" height={'100%'} draggable={false} />
-                </Box>
-            </Stack> */}
         </Stack>
     );
 };

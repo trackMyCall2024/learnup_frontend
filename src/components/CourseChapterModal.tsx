@@ -163,7 +163,7 @@ const CourseChapterModal: React.FC<CourseChapterModalProps> = ({ open, onClose }
                     logo: 'logo',
                     type: DirectoryType.Section,
                 });
-                sectionIdToUse = section._id;
+                sectionIdToUse = section.directory._id;
             }
 
             setSectionId(sectionIdToUse);

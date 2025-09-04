@@ -22,6 +22,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBook } from '@fortawesome/free-solid-svg-icons';
 import Recorder from './components/Layout/Recorder';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import DeleteModal from './components/Layout/DeleteModal';
 
 function App() {
     const { isAuthenticated, isLoading, user, loginWithRedirect, getAccessTokenSilently } =
@@ -68,7 +69,7 @@ function App() {
     } else {
         return (
             <>
-                <Stack height="100vh" flexDirection="row" overflow="hidden">
+                <Stack height="100vh" flexDirection="row" overflow="hidden" minHeight={'600px'}>
                     <RenderWhen if={global.page.next.isOpen}>
                         <HalfPage />
                     </RenderWhen>
@@ -100,6 +101,9 @@ function App() {
                         onClose={() => dispatch(setModalOpen(false))}
                     />
                 )}
+                <RenderWhen if={global.deleteModal.isOpen}>
+                    <DeleteModal />
+                </RenderWhen>
                 <Recorder />
             </>
         );

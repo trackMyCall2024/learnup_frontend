@@ -152,9 +152,12 @@ export const sendToTranscriptionQueue = async ({
     return res.data;
 };
 
-export const createDirectory = async (directory: DirectoryRequest) => {
+export const createDirectory = async (
+    directory: DirectoryRequest,
+    tmp_id?: string,
+): Promise<{ directory: DirectoryResponse; tmp_id?: string }> => {
     const res = await nestServer.post<DirectoryResponse>('/directory', directory);
-    return res.data;
+    return { directory: res.data, tmp_id: tmp_id ?? '' };
 };
 
 export const createResume = async (sectionId: string) => {
@@ -164,5 +167,20 @@ export const createResume = async (sectionId: string) => {
 
 export const createNote = async (sectionId: string) => {
     const res = await nestServer.post<NoteResponse>(`/note`, { section: sectionId, data: '' });
+    return res.data;
+};
+
+export const deleteDirectory = async (directoryId: string) => {
+    const res = await nestServer.delete(`/directory/${directoryId}`);
+    return res.data;
+};
+
+export const deleteResume = async (resumeId: string) => {
+    const res = await nestServer.delete(`/resume/${resumeId}`);
+    return res.data;
+};
+
+export const deleteNote = async (noteId: string) => {
+    const res = await nestServer.delete(`/note/${noteId}`);
     return res.data;
 };

@@ -10,6 +10,6 @@ export interface Row {
     _id: string;
     parentID: string;
     name: string;
-    logo: string;
+    logo: string | undefined;
     type: DirectoryType;
 }

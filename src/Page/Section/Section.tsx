@@ -37,31 +37,31 @@ const Section = () => {
 
     // REQUESTS
     const directoryRequest = useQuery({
-        queryKey: ['getDirectory'],
+        queryKey: ['getDirectory', sectionId],
         queryFn: () => getDirectory(sectionId),
         enabled: !!sectionId,
     });
 
     const resumeRequest = useQuery({
-        queryKey: ['getResume'],
+        queryKey: ['getResume', sectionId],
         queryFn: () => getResume(sectionId),
         enabled: !!sectionId,
     });
 
     const noteRequest = useQuery({
-        queryKey: ['getNote'],
+        queryKey: ['getNote', sectionId],
         queryFn: () => getNote(sectionId),
         enabled: !!sectionId,
     });
 
     const chatRequest = useQuery({
-        queryKey: ['getChat'],
+        queryKey: ['getChat', sectionId],
         queryFn: () => getChat(sectionId),
         enabled: !!sectionId,
     });
 
     const pagesRequest = useQuery({
-        queryKey: ['getPages'],
+        queryKey: ['getPages', sectionId],
         queryFn: () => getPages(sectionId as string),
         enabled: !!sectionId,
     });
@@ -147,6 +147,16 @@ const Section = () => {
             value: selectedGame,
             set: setSelectedGame,
         },
+        addPage: () => {
+            setPages((prev) => [...prev, {
+                _id: '',
+                title: 'New Page',
+                data: '',
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            }]);
+            // setPageIndex(pages.length - 1);
+        },
     };
 
     // display chunks ou note ou resume
@@ -195,37 +205,43 @@ const Section = () => {
 
     return (
         <Stack display={'flex'} flex={1} flexDirection={'row'} gap={5}>
-            <Stack display={'flex'} flexDirection={'column'} width={'-webkit-fill-available'}>
+            <Stack
+                display={'flex'}
+                flexDirection={'column'}
+                width={'-webkit-fill-available'}
+                minHeight={'0px'}
+            >
                 <RenderWhen if={haveSection}>
-                    <Stack display={'flex'} flexDirection={'column'} gap={2} flex={1}>
-                        <Box
-                            sx={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                flex: 1,
-                                padding: 0,
-                            }}
-                        >
-                            <RenderWhen if={haveSection && !chatIsOpen}>
-                                <Page
-                                    sectionName={sectionData?.name as string}
-                                    tools={tools}
-                                    pageIsZoomed={global.lesson.isZoomed}
-                                    ariaValue={ariaValue}
-                                    setPageIsZoomed={() => dispatch(setIsLessonZoomed(!global.lesson.isZoomed))}
-                                    handleAriaChange={handleAriaChange}
-                                />
-                            </RenderWhen>
-                            <RenderWhen if={haveSection && chatIsOpen && !!chat}>
-                                <Chat
-                                    chat={chat as ChatMessage[]}
-                                    sendMessage={sendMessage}
-                                    isLargeChat={isLargeChat}
-                                    setIsLargeChat={setIsLargeChat}
-                                />
-                            </RenderWhen>
-                        </Box>
-                    </Stack>
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            flex: 1,
+                            padding: 0,
+                            minHeight: '0px',
+                        }}
+                    >
+                        <RenderWhen if={haveSection && !chatIsOpen}>
+                            <Page
+                                sectionName={sectionData?.name as string}
+                                tools={tools}
+                                pageIsZoomed={global.lesson.isZoomed}
+                                ariaValue={ariaValue}
+                                setPageIsZoomed={() =>
+                                    dispatch(setIsLessonZoomed(!global.lesson.isZoomed))
+                                }
+                                handleAriaChange={handleAriaChange}
+                            />
+                        </RenderWhen>
+                        <RenderWhen if={haveSection && chatIsOpen && !!chat}>
+                            <Chat
+                                chat={chat as ChatMessage[]}
+                                sendMessage={sendMessage}
+                                isLargeChat={isLargeChat}
+                                setIsLargeChat={setIsLargeChat}
+                            />
+                        </RenderWhen>
+                    </Box>
                 </RenderWhen>
             </Stack>
             <RenderWhen if={!global.lesson.isZoomed && !isLargeChat}>

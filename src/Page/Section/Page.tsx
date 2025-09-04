@@ -8,6 +8,7 @@ import CustomBtn from '../../components/atoms/CustomBtn';
 import ZoomInMapIcon from '@mui/icons-material/ZoomInMap';
 import { ToolsState } from '../../components/atoms/Tools';
 import { getCapitalizeCase } from '../../utils/utils';
+import { useEffect, useRef } from 'react';
 
 interface PageProps {
     sectionName: string;
@@ -27,7 +28,13 @@ const Page = ({
     handleAriaChange,
 }: PageProps) => {
     return (
-        <>
+        <Stack
+            display={'flex'}
+            flexDirection={'column'}
+            flex={1}
+            minHeight={'0px'}
+            sx={{ overflow: 'hidden' }}
+        >
             <Stack
                 sx={{
                     borderBottom: (th) => `0.5px solid ${th.palette.grey['400']}`,
@@ -42,7 +49,7 @@ const Page = ({
                                 ? `${tools.pageIndex.value + 1}`
                                 : ''}{' '}
                         </H4>
-                        <Text sx={{ color: (th) => th.palette.primary[600] }}>{sectionName}</Text>
+                        <Text sx={{ color: (th) => th.palette.grey['600'] }}>{sectionName}</Text>
                     </Stack>
                     <Stack
                         flexDirection={'row'}
@@ -81,14 +88,49 @@ const Page = ({
                     flex: 1,
                     padding: 2,
                     border: 0,
-                    // overflowY: 'auto',
-                    maxHeight: '-webkit-fill-available',
+                    resize: 'none',
+                    minHeight: '0',
+                    maxHeight: 'none',
+                    '& .MuiTextarea-root': {
+                        height: 'auto !important',
+                        overflow: 'hidden !important',
+                        overflowY: 'scroll !important',
+                    },
+                    '& .MuiInputBase-root': {
+                        height: 'auto !important',
+                        overflow: 'hidden !important',
+                        overflowY: 'scroll !important',
+                    },
+                    '& .MuiInputBase-input': {
+                        height: 'auto !important',
+                        overflow: 'hidden !important',
+                        overflowY: 'scroll !important',
+                    },
+                    '& textarea': {
+                        height: 'auto !important',
+                        overflow: 'hidden !important',
+                        overflowY: 'scroll !important',
+                        // Scrollbar style
+                        '&::-webkit-scrollbar': {
+                            width: '6px', // Augmenter la largeur de la scrollbar
+                        },
+                        '&::-webkit-scrollbar-thumb': {
+                            background: 'rgba(0,0,0,0.3)', // Thumb plus visible
+                            borderRadius: '6px',
+                            border: '2px solid transparent',
+                            backgroundClip: 'content-box',
+                            '&:hover': {
+                                background: 'rgba(0,0,0,0.5)', // Plus foncé au hover
+                                backgroundClip: 'content-box',
+                            },
+                        },
+                    },
                     '& .Mui-focused': {
                         border: 0,
                     },
                 }}
             />
-        </>
+        </Stack>
     );
 };
 

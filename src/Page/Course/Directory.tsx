@@ -5,17 +5,18 @@ import { GlobalState } from '../../store/global';
 import { useQuery } from '@tanstack/react-query';
 import { Stack } from '@mui/material';
 import Search from '../../components/atoms/Search';
-import { getHistory, getRows } from '../../protocol/api';
+import { createDirectory, getHistory, getRows } from '../../protocol/api';
 import { Page } from '../../interface.global';
 import RenderWhen from '../../components/atoms/RenderWhen';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import Rows from '../../components/atoms/Rows';
-import { DirectoryType, Row } from './interface.directory';
+import { Row } from './interface.directory';
 import { UserState } from '../../store/user';
 import RightNavbar from '../../components/atoms/RightNavbar';
-import { getController, getHistoryType, getDirectoryType } from '../../utils/utils';
+import { getHistoryType, getDirectoryType } from '../../utils/utils';
 import { usePage } from '../../hooks/usePage';
-import { HistoryType } from '../../components/atoms/Row';
+import { useMutation } from '@tanstack/react-query';
+import { DirectoryRequest } from '../../protocol/api.type';
 
 interface DirectoryProps {
     halfPageIsOpen?: boolean;
@@ -24,7 +25,8 @@ interface DirectoryProps {
 }
 
 const Directory = ({ halfPageIsOpen, idFromHalfPage, headerFromHalfPage }: DirectoryProps) => {
-    const [pagination, setPagination] = useState({ page: 1, limit: 100 });
+    const [pagination, setPagination] = useState({ page: 1, limit: 20 });
+    const [localRows, setLocalRows] = useState<Row[]>([]);
 
     // QUERY
     const { id: idFromUrl } = useParams();
@@ -36,7 +38,6 @@ const Directory = ({ halfPageIsOpen, idFromHalfPage, headerFromHalfPage }: Direc
     const currentPage = halfPageIsOpen
         ? (global.page.next.title as string)
         : global.page.current.title;
-
 
     // HOOKS
     const [filterSearch, setFilterSearch] = useState<string>('');
@@ -64,8 +65,30 @@ const Directory = ({ halfPageIsOpen, idFromHalfPage, headerFromHalfPage }: Direc
         enabled: currentPage === Page.Courses,
     });
 
-    // state display { history, rightNavbar: enum }
-    // Render when display rightNavbar (if not courses) -> composant rightNavbar (props: page)
+    const newRow = (): DirectoryRequest => {
+        return {
+            parentID: parentId,
+            type: getDirectoryType(currentPage),
+            name: `New ${getDirectoryType(currentPage)}`,
+            logo: undefined,
+        };
+    };
+
+    const createDirectoryMutation = useMutation({
+        mutationFn: () => createDirectory(newRow()),
+        onSettled: () => {
+            const newRowWithId: Row = { ...newRow(), _id: `${localRows.length + 1}` };
+            setLocalRows([...localRows, newRowWithId]);
+        },
+        onSuccess: (data) => {
+            const createdRowWithId: Row = { ...newRow(), _id: data.directory._id };
+            setLocalRows(localRows.map((row) => (row._id === data.tmp_id ? createdRowWithId : row)));
+        },
+    });
+
+    const handleCreateRow = () => {
+        createDirectoryMutation.mutate();
+    };
 
     const haveRows = !rows.isLoading && !!rows.data;
     const haveHistory = !!history.data?.length;
@@ -78,6 +101,12 @@ const Directory = ({ halfPageIsOpen, idFromHalfPage, headerFromHalfPage }: Direc
             handleBackToCourses();
         }
     }, [canOpenRightNavbar, global.page.previous.title]);
+
+    useEffect(() => {
+        if (rows.data) {
+            setLocalRows(rows.data as Row[]);
+        }
+    }, [rows.data]);
 
     return (
         <Stack display={'flex'} flex={1} flexDirection={'row'} gap={canOpenRightNavbar ? 5 : 0}>
@@ -94,12 +123,14 @@ const Directory = ({ halfPageIsOpen, idFromHalfPage, headerFromHalfPage }: Direc
                     </RenderWhen>
                     <RenderWhen if={haveRows}>
                         <Rows
+                            currentPage={currentPage as Page}
                             headerTitle={`All ${
                                 headerFromHalfPage
                                     ? (global.page.next.title as Page)
                                     : global.page.current.title
                             }`}
-                            rowsData={rows.data as Row[]}
+                            rowsData={localRows}
+                            handkeCreateRow={handleCreateRow}
                         />
                     </RenderWhen>
                 </Stack>

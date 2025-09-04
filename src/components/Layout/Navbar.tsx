@@ -18,11 +18,7 @@ import { faGear } from '@fortawesome/free-solid-svg-icons';
 import { faBan } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useDispatch, useSelector } from 'react-redux';
-import {
-    GlobalState,
-    setCurrentPage,
-    setIsRecorderOpen,
-} from '../../store/global';
+import { GlobalState, setCurrentPage, setIsRecorderOpen } from '../../store/global';
 import { globalSelector, State, userSelector } from '../../store/selector';
 import { UserState } from '../../store/user';
 import { Page } from '../../interface.global';
@@ -59,15 +55,23 @@ const Navbar = () => {
 
             // Second animation
             // Animer les éléments internes (btn, box, list) avec opacité 0 en 0.2s
-            gsap.to(['#btn-expand-navbar', boxRef.current, listRef.current], {
-                opacity: 0,
-                duration: 0.2,
-                ease: 'power2.inOut',
-                onComplete: () => {
-                    if (boxRef.current) boxRef.current.style.display = 'none';
-                    if (listRef.current) listRef.current.style.display = 'none';
+            gsap.to(
+                [
+                    '#btn-expand-navbar',
+                    '#btn-switch-recorder-modal-vue',
+                    boxRef.current,
+                    listRef.current,
+                ],
+                {
+                    opacity: 0,
+                    duration: 0.2,
+                    ease: 'power2.inOut',
+                    onComplete: () => {
+                        if (boxRef.current) boxRef.current.style.display = 'none';
+                        if (listRef.current) listRef.current.style.display = 'none';
+                    },
                 },
-            });
+            );
 
             gsap.to(navbarRef.current, {
                 paddingLeft: '0px',
@@ -86,12 +90,20 @@ const Navbar = () => {
                     paddingLeft: '16px',
                     paddingRight: '16px',
                     onComplete: () => {
-                        gsap.to(['#btn-expand-navbar', boxRef.current, listRef.current], {
-                            opacity: 1,
-                            display: 'flex',
-                            duration: 0.1,
-                            ease: 'power2.inOut',
-                        });
+                        gsap.to(
+                            [
+                                '#btn-expand-navbar',
+                                '#btn-switch-recorder-modal-vue',
+                                boxRef.current,
+                                listRef.current,
+                            ],
+                            {
+                                opacity: 1,
+                                display: 'flex',
+                                duration: 0.1,
+                                ease: 'power2.inOut',
+                            },
+                        );
                     },
                 });
             }
@@ -100,7 +112,7 @@ const Navbar = () => {
 
     return (
         <Stack
-            height={'100vh'}
+            height={'-webkit-fill-available'}
             width={fixWidth}
             display={'flex'}
             flexDirection={'column'}
@@ -229,6 +241,7 @@ const Navbar = () => {
                 })}
             </List>
             <Box
+                id="btn-switch-recorder-modal-vue"
                 sx={{ width: '100%', display: 'flex', justifyContent: 'flex-start' }}
             >
                 <Switch
