@@ -7,7 +7,7 @@ export enum DirectoryType {
 }
 
 export interface Row {
-    _id: string;
+    _id: string | undefined;
     parentID: string;
     name: string;
     logo: string | undefined;

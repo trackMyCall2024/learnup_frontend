@@ -10,21 +10,36 @@ import { Page } from '../../interface.global';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { getPageName } from '../../utils/utils';
+import { RowWithTmpId } from '../../Page/Course/Directory';
 
 interface RowProps {
     headerTitle: string;
-    rowsData: RowInterface[];
+    rowsData: (RowInterface | RowWithTmpId)[];
     currentPage?: Page;
+    localHalfPageIsOpen?: boolean;
     handkeCreateRow?: () => void;
 }
 
-const Rows = ({ currentPage, headerTitle, rowsData, handkeCreateRow }: RowProps) => {
+const Rows = ({
+    currentPage,
+    headerTitle,
+    rowsData,
+    localHalfPageIsOpen,
+    handkeCreateRow,
+}: RowProps) => {
     const global = useSelector<State, GlobalState>(globalSelector);
     const isHistoryType = headerTitle === 'History';
 
     const rowList = (
         <Stack display={'flex'} flexDirection={'column'} gap={1}>
-            {rowsData?.map((row, i) => <Row key={i} row={row} rowType={RowType.List} />)}
+            {rowsData?.map((row, i) => (
+                <Row
+                    key={i}
+                    row={row}
+                    rowType={RowType.List}
+                    localHalfPageIsOpen={localHalfPageIsOpen}
+                />
+            ))}
             {/* Add a new row */}
             <Box
                 sx={{
@@ -41,8 +56,10 @@ const Rows = ({ currentPage, headerTitle, rowsData, handkeCreateRow }: RowProps)
                     cursor: global.page.next.isOpen ? 'default' : 'pointer',
                     borderRadius: 2,
                     ':hover': {
-                        backgroundColor: global.page.next.isOpen ? 'initial' : 'rgba(250, 250, 250, 0.7)',
-                    }
+                        backgroundColor: global.page.next.isOpen
+                            ? 'initial'
+                            : 'rgba(250, 250, 250, 0.7)',
+                    },
                 }}
                 onClick={() => {
                     if (global.page.next.isOpen) {
@@ -51,7 +68,12 @@ const Rows = ({ currentPage, headerTitle, rowsData, handkeCreateRow }: RowProps)
                     handkeCreateRow?.();
                 }}
             >
-                <FontAwesomeIcon icon={faPlus} color={'#e0e0e0'} size='sm' style={{ marginRight: 5 }} />
+                <FontAwesomeIcon
+                    icon={faPlus}
+                    color={'#e0e0e0'}
+                    size="sm"
+                    style={{ marginRight: 5 }}
+                />
                 New {getPageName(currentPage as Page)}
             </Box>
         </Stack>

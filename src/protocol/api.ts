@@ -195,3 +195,8 @@ export const deleteNote = async (noteId: string) => {
     const res = await nestServer.delete(`/note/${noteId}`);
     return res.data;
 };
+
+export const updateDirectory = async (directoryId: string, directory: DirectoryRequest) => {
+    const res = await nestServer.put(`/directory/${directoryId}`, directory);
+    return res.data;
+};

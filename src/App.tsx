@@ -1,25 +1,16 @@
-import { Box, Button, Stack, Typography } from '@mui/material';
+import { Stack } from '@mui/material';
 import Navbar from './components/Layout/Navbar';
 import { Outlet, useLocation } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { getUser, setAuthToken } from './protocol/api';
 import { useDispatch, useSelector } from 'react-redux';
-import { useAuth0, User as UserAuth0 } from '@auth0/auth0-react';
-import { useEffect, useState } from 'react';
+import { useAuth0 } from '@auth0/auth0-react';
+import { useState } from 'react';
 import { LoadingPage } from './AppRouter';
-import { setUser } from './store/user';
-import { H1 } from './components/atoms/Typography';
 import HalfPage from './Page/Course/HalfPage';
 import Header from './components/Layout/Header';
 import RenderWhen from './components/atoms/RenderWhen';
 import { globalSelector, recordManagerSelector, State } from './store/selector';
 import { GlobalState } from './store/global';
-import CourseChapterModal from './components/CourseChapterModal';
-import { RecordManagerState, setModalOpen } from './store/recordManager';
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import { Select, Option } from '@mui/joy';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBook } from '@fortawesome/free-solid-svg-icons';
+import { RecordManagerState } from './store/recordManager';
 import Recorder from './components/Layout/Recorder';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import DeleteModal from './components/Layout/DeleteModal';
@@ -103,20 +94,15 @@ function App() {
                         </Stack>
                     </Stack>
                 </Stack>
-
-                {isModalOpen && (
-                    <CourseChapterModal
-                        open={isModalOpen}
-                        onClose={() => dispatch(setModalOpen(false))}
-                    />
-                )}
                 <RenderWhen if={global.deleteModal.isOpen}>
                     <DeleteModal />
                 </RenderWhen>
-                <RenderWhen if={global.errorModal.isOpen}>
+                {/* <RenderWhen if={global.errorModal.isOpen && currentPage !== Page.Courses}>
                     <ErrorModal />
+                </RenderWhen> */}
+                <RenderWhen if={global.recorder.isOpen}>
+                    <Recorder />
                 </RenderWhen>
-                <Recorder />
             </>
         );
     }

@@ -249,7 +249,6 @@ const Recorder = () => {
 
     return (
         <Stack
-            display={isOpen ? 'flex' : 'none'}
             flexDirection={'column'}
             justifyContent={'space-between'}
             position="fixed"

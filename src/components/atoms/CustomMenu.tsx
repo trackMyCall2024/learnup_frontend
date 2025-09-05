@@ -26,15 +26,15 @@ const CustomMenu = () => {
     const open = Boolean(anchorEl);
 
     const directoryType = getDirectoryByPage(location.pathname.split('/')?.[1]);
-    const childId = location.pathname.split('/').pop();
+    const parentId = location.pathname.split('/').pop();
 
     console.log('@@@@directoryType', directoryType);
-    console.log('@@@@childId', childId);
+    console.log('@@@@parentId', parentId);
 
     const { data: parentDirectory, error: parentDirectoryError } = useQuery({
-        queryKey: ['parentDirectory', childId],
-        queryFn: () => getDirectory(childId as string),
-        enabled: !!childId && !!directoryType,
+        queryKey: ['parentDirectory', parentId],
+        queryFn: () => getDirectory(parentId as string),
+        enabled: !!parentId && !!directoryType,
         retry: false, // Ne pas retry en cas d'erreur 404
     });
 
@@ -92,7 +92,7 @@ const CustomMenu = () => {
     // Ne pas afficher le menu si le répertoire parent n'est pas trouvé
     if (parentDirectoryError) {
         console.log('Parent directory error:', parentDirectoryError);
-        return null;
+        // return null;
     }
 
     return (

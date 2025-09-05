@@ -8,7 +8,7 @@ import CustomBtn from '../../components/atoms/CustomBtn';
 import ZoomInMapIcon from '@mui/icons-material/ZoomInMap';
 import { ToolsState } from '../../components/atoms/Tools';
 import { getCapitalizeCase } from '../../utils/utils';
-import { useEffect, useRef } from 'react';
+import { Page as PageEnum } from '../../interface.global';
 
 interface PageProps {
     sectionName: string;
@@ -57,7 +57,7 @@ const Page = ({
                         alignItems={'flex-start'}
                         gap={2}
                     >
-                        <FileAction size="sm" />
+                        <FileAction size="sm" page={PageEnum.Section} />
                         <CustomBtn onClick={() => setPageIsZoomed(!pageIsZoomed)}>
                             {pageIsZoomed ? (
                                 <ZoomInMapIcon

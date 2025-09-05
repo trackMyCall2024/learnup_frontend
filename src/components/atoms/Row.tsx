@@ -1,20 +1,17 @@
 import { Row as RowInterface } from '../../Page/Course/interface.directory';
-import { Stack } from '@mui/material';
+import { debounce, Stack, TextField } from '@mui/material';
 import Box from './Box';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChess } from '@fortawesome/free-solid-svg-icons';
-import { faShareNodes } from '@fortawesome/free-solid-svg-icons';
-import { faArrowDown } from '@fortawesome/free-solid-svg-icons';
-import { Text } from './Typography';
-import { GlobalState, RowPage, setIsHalfPageIsOpen, setNextPage } from '../../store/global';
-import { useDispatch, useSelector } from 'react-redux';
-import { Page } from '../../interface.global';
+import { GlobalState } from '../../store/global';
+import { useSelector } from 'react-redux';
 import { globalSelector, State } from '../../store/selector';
 import RenderWhen from './RenderWhen';
-import { setCurrentHistory, setCurrentItem } from '../../store/directory';
-import { useNavigate } from 'react-router-dom';
-import { getNextPage, usePage } from '../../hooks/usePage';
 import FileAction from './FileActions';
+import { useCallback, useState, useRef } from 'react';
+import { updateDirectory } from '../../protocol/api';
+import { RowWithTmpId } from '../../Page/Course/Directory';
+import { usePage } from '../../hooks/usePage';
 
 export enum RowType {
     History = 'history',
@@ -23,7 +20,8 @@ export enum RowType {
 
 interface RowProps {
     rowType: RowType;
-    row: RowInterface;
+    row: RowInterface | RowWithTmpId;
+    localHalfPageIsOpen?: boolean;
 }
 
 export enum HistoryType {
@@ -32,37 +30,29 @@ export enum HistoryType {
     Section = 'sections',
 }
 
-const Row = ({ rowType, row }: RowProps) => {
-    const dispatch = useDispatch();
-    const navigate = useNavigate();
-    const { handleGoToNext, currentPage } = usePage();
-
+const Row = ({ rowType, row, localHalfPageIsOpen }: RowProps) => {
     const global = useSelector<State, GlobalState>(globalSelector);
-    const historyType = currentPage as string;
+    const { currentPage } = usePage();
 
-    const handleClick = () => {
-        dispatch(
-            setNextPage({
-                _id: row._id,
-                title: getNextPage(currentPage) as RowPage,
-                isOpen: currentPage === Page.Sections ? false : true,
-            }),
-            dispatch(
-                setCurrentHistory({
-                    type: historyType,
-                    data: row,
-                }),
-            ),
-            dispatch(
-                setCurrentItem({
-                    [currentPage]: row._id,
-                }),
-            ),
-        );
-        if (currentPage === Page.Sections) {
-            handleGoToNext(() => navigate(`/section/${row._id}`));
-        } else {
-            dispatch(setIsHalfPageIsOpen(true));
+    const [text, setText] = useState(row.name);
+    const textFieldRef = useRef<HTMLInputElement>(null);
+
+    const debouncedUpdate = useCallback(
+        debounce((newText: string) => {
+            updateDirectory(row._id as string, {
+                name: newText,
+                parentID: row.parentID,
+                logo: row.logo,
+                type: row.type,
+            });
+        }, 500), // 500ms après la dernière frappe
+        [row._id, row.parentID, row.logo, row.type],
+    );
+
+    const handleUpdateTextRow = (newText: string) => {
+        setText(newText);
+        if (row._id) {
+            debouncedUpdate(newText);
         }
     };
 
@@ -72,18 +62,20 @@ const Row = ({ rowType, row }: RowProps) => {
                 display: 'flex',
                 flexDirection: 'row',
                 alignItems: 'center',
+                gap: 2,
                 justifyContent: rowType === RowType.List ? 'space-between' : 'flex-start',
                 width: rowType === RowType.List ? '-webkit-fill-available' : '30%',
-                cursor: global.page.next.isOpen ? 'default' : 'pointer',
+                // cursor: global.page.next.isOpen ? 'default' : 'pointer',
                 ':hover': {
-                    backgroundColor: global.page.next.isOpen ? 'initial' : 'rgba(250, 250, 250, 0.7)',
+                    backgroundColor: global.page.next.isOpen
+                        ? 'initial'
+                        : 'rgba(250, 250, 250, 0.7)',
                 },
             }}
             onClick={() => {
                 if (global.page.next.isOpen) {
                     return;
                 }
-                handleClick();
             }}
         >
             <Stack
@@ -92,12 +84,41 @@ const Row = ({ rowType, row }: RowProps) => {
                 alignItems={'center'}
                 justifyContent={'center'}
                 gap={2}
+                sx={{ flex: 1, position: 'relative' }}
             >
                 <FontAwesomeIcon icon={faChess} />
-                <Text>{row.name}</Text>
+                <TextField
+                    ref={textFieldRef}
+                    id="standard-basic"
+                    // label={row.name}
+                    variant="standard"
+                    value={text}
+                    onChange={(e) => handleUpdateTextRow(e.target.value)}
+                    autoFocus={!!(row as RowWithTmpId).tmp_id}
+                    sx={{
+                        flex: 1,
+                        '& .MuiInput-underline:before': {
+                            borderBottom: 'none',
+                        },
+                        '& .MuiInput-underline:after': {
+                            borderBottom: (th) => `0.5px solid ${th.palette.grey['400']}`,
+                        },
+                        '& .MuiInput-underline:hover:not(.Mui-disabled):before': {
+                            borderBottom: 'none',
+                        },
+                        '& .MuiInputBase-root': {
+                            border: 'none',
+                        },
+                    }}
+                />
             </Stack>
             <RenderWhen if={rowType === RowType.List}>
-                <FileAction size={'xs'} />
+                <FileAction
+                    size={'xs'}
+                    localHalfPageIsOpen={localHalfPageIsOpen}
+                    row={row}
+                    page={currentPage}
+                />
             </RenderWhen>
         </Box>
     );

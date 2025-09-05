@@ -70,7 +70,11 @@ const Header = ({ titleFromHalfPage, isHalfPageIsOpen }: HeaderProps) => {
         }
     }, [global.navbar.isEnlarged]);
 
-    console.log('currentPage', currentPage);
+    console.log(
+        '@@Front - currentPage',
+        currentPage,
+        currentPage === Page.Chapters || currentPage === Page.Sections || currentPage === Page.Section,
+    );
 
     return (
         <Stack
@@ -79,6 +83,7 @@ const Header = ({ titleFromHalfPage, isHalfPageIsOpen }: HeaderProps) => {
             sx={{
                 padding: '10px 30px',
                 borderBottom: (th) => `0.5px solid ${th.palette.grey['400']}`,
+                position: 'relative',
             }}
             display={'flex'}
             flexDirection={'row'}
