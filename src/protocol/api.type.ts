@@ -1,4 +1,4 @@
-import { DirectoryType } from "../Page/Course/interface.directory";
+import { DirectoryType } from '../Page/Course/interface.directory';
 
 export {};
 
@@ -50,4 +50,16 @@ export interface DirectoryRequest {
     name: string;
     logo: string | undefined;
     type: DirectoryType;
+}
+
+export interface ResumeRequest {
+    _id: string;
+    section: string;
+    data: string;
+}
+
+export interface NoteRequest {
+    _id: string;
+    section: string;
+    data: string;
 }

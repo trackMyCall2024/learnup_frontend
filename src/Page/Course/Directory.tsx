@@ -4,7 +4,7 @@ import { globalSelector, State } from '../../store/selector';
 import { GlobalState, setErrorModalOpen } from '../../store/global';
 import { Stack } from '@mui/material';
 import Search from '../../components/atoms/Search';
-import { createDirectory, getDirectory } from '../../protocol/api';
+import { createDirectory, createResume, createNote } from '../../protocol/api';
 import { Page } from '../../interface.global';
 import RenderWhen from '../../components/atoms/RenderWhen';
 import Rows from '../../components/atoms/Rows';
@@ -75,10 +75,15 @@ const Directory = ({ halfPageIsOpen, idFromHalfPage, headerFromHalfPage }: Direc
             setLocalRows([...localRows, newRowWithId]);
             return createDirectory(newRow(), tempId);
         },
-        onSuccess: (data) => {
+        onSuccess: async(data) => {
             const createdRowWithId: RowWithTmpId = { ...data.directory, _id: data.directory._id, tmp_id: data.tmp_id };
             const haveRowWithTmpId = localRows.some((row) => row.tmp_id === data.tmp_id);
-            console.log('@@dd haveRowWithTmpId', haveRowWithTmpId, data.tmp_id, localRows);
+
+            if (currentPage === Page.Sections) {
+                await createResume(data.directory._id);
+                await createNote(data.directory._id);
+            }
+
             if (haveRowWithTmpId) {
                 setLocalRows(
                     localRows.map((row) => (row.tmp_id === data.tmp_id ? createdRowWithId : row)),

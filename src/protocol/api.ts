@@ -8,6 +8,8 @@ import {
     DirectoryRequest,
     DirectoryResponse,
     NoteResponse,
+    NoteRequest,
+    ResumeRequest,
     ResumeResponse,
 } from './api.type';
 import config from '../config';
@@ -198,5 +200,15 @@ export const deleteNote = async (noteId: string) => {
 
 export const updateDirectory = async (directoryId: string, directory: DirectoryRequest) => {
     const res = await nestServer.put(`/directory/${directoryId}`, directory);
+    return res.data;
+};
+
+export const updateResume = async (resumeId: string, resume: ResumeRequest) => {
+    const res = await nestServer.put(`/resume/${resumeId}`, resume);
+    return res.data;
+};
+
+export const updateNote = async (noteId: string, note: NoteRequest) => {
+    const res = await nestServer.put(`/note/${noteId}`, note);
     return res.data;
 };

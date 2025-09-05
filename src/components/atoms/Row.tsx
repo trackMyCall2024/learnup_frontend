@@ -91,6 +91,7 @@ const Row = ({ rowType, row, localHalfPageIsOpen }: RowProps) => {
                     ref={textFieldRef}
                     id="standard-basic"
                     // label={row.name}
+                    placeholder={`${row.type} name...`}
                     variant="standard"
                     value={text}
                     onChange={(e) => handleUpdateTextRow(e.target.value)}

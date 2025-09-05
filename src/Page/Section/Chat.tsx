@@ -12,9 +12,9 @@ import CustomBtn from '../../components/atoms/CustomBtn';
 
 interface ChatProps {
     chat: ChatMessage[];
-    sendMessage: (chat: ChatMessage) => void;
     isLargeChat: boolean;
     setIsLargeChat: React.Dispatch<React.SetStateAction<boolean>>;
+    sendMessage: (chat: ChatMessage) => void;
 }
 
 const Chat = ({ chat, isLargeChat, sendMessage, setIsLargeChat }: ChatProps) => {

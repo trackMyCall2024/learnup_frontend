@@ -1,7 +1,16 @@
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
-import { getChat, getDirectory, getNote, getPages, getResume } from '../../protocol/api';
-import { Stack } from '@mui/material';
+import {
+    getChat,
+    getDirectory,
+    getNote,
+    getPages,
+    getResume,
+    updateDirectory,
+    updateNote,
+    updateResume,
+} from '../../protocol/api';
+import { debounce, Stack } from '@mui/material';
 import {
     ChatMessage,
     Page as PageInterface,
@@ -10,7 +19,7 @@ import {
     View,
 } from './interface.type';
 import RightNavbar from '../../components/atoms/RightNavbar';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import RenderWhen from '../../components/atoms/RenderWhen';
 import Box from '../../components/atoms/Box';
 import { ToolsState } from '../../components/atoms/Tools';
@@ -40,30 +49,35 @@ const Section = () => {
         queryKey: ['getDirectory', sectionId],
         queryFn: () => getDirectory(sectionId),
         enabled: !!sectionId,
+        retry: false,
     });
 
     const resumeRequest = useQuery({
         queryKey: ['getResume', sectionId],
         queryFn: () => getResume(sectionId),
         enabled: !!sectionId,
+        retry: false,
     });
 
     const noteRequest = useQuery({
         queryKey: ['getNote', sectionId],
         queryFn: () => getNote(sectionId),
         enabled: !!sectionId,
+        retry: false,
     });
 
     const chatRequest = useQuery({
         queryKey: ['getChat', sectionId],
         queryFn: () => getChat(sectionId),
         enabled: !!sectionId,
+        retry: false,
     });
 
     const pagesRequest = useQuery({
         queryKey: ['getPages', sectionId],
         queryFn: () => getPages(sectionId as string),
         enabled: !!sectionId,
+        retry: false,
     });
 
     const [directory, setDirectory] = useState<DirectoryResponse | null>(null);
@@ -86,33 +100,70 @@ const Section = () => {
     // GLOBAL LOCAL STATES
     const [isLargeChat, setIsLargeChat] = useState<boolean>(false);
 
+    const debouncedUpdate = useCallback(
+        debounce((controller: 'pages' | 'resume' | 'note', newText: string) => {
+            switch (controller) {
+                case 'pages': {
+                    if (!pages[pageIndex]) {
+                        return;
+                    }
+                    // updatePages(pages[pageIndex]._id, { data: newText });
+                    break;
+                }
+                case 'resume': {
+                    if (!resume) {
+                        return;
+                    }
+                    updateResume(resume._id, { _id: resume._id, section: sectionId, data: newText });
+                    break;
+                }
+                case 'note': {
+                    if (!note) {
+                        return;
+                    }
+                    updateNote(note._id, { _id: note._id, section: sectionId, data: newText });
+                    break;
+                }
+            }
+        }, 500), // 500ms après la dernière frappe
+        [pages, pageIndex, resume, note],
+    );
+
     const handleAriaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         const newValue = e.target.value;
 
         switch (view) {
             case View.Pages: {
+                if (!pages[pageIndex]) {
+                    return;
+                }
                 const newCurrentPage = { ...pages[pageIndex], data: newValue };
                 setPages((prev) => {
                     const newPages = [...prev];
                     newPages[pageIndex] = newCurrentPage;
                     return newPages;
                 });
+                // debouncedUpdate('pages', newValue);
                 break;
             }
 
             case View.Resume: {
-                if (resume) {
-                    const newResume = { ...resume, data: newValue };
-                    setResume(newResume);
+                if (!resume) {
+                    return;
                 }
+                const newResume = { ...resume, data: newValue };
+                setResume(newResume);
+                debouncedUpdate('resume', newValue);
                 break;
             }
 
             case View.Note: {
-                if (note) {
-                    const newNote = { ...note, data: newValue };
-                    setNote(newNote);
+                if (!note) {
+                    return;
                 }
+                const newNote = { ...note, data: newValue };
+                setNote(newNote);
+                debouncedUpdate('note', newValue);
                 break;
             }
 
@@ -178,8 +229,8 @@ const Section = () => {
     const haveSection =
         !!directoryRequest?._id &&
         !!pagesRequest?.data &&
-        !!resumeRequest?.data &&
-        !!noteRequest?.data &&
+        // !!resumeRequest?.data &&
+        // !!noteRequest?.data &&
         !!chatRequest?.data;
 
     console.log('@@Front - pagesRequest.data:', pagesRequest.data);
@@ -192,9 +243,9 @@ const Section = () => {
 
     useEffect(() => {
         if (haveSection) {
-            console.log('@@Front - pagesRequest.data:', pagesRequest.data);
-            console.log('@@Front - resumeRequest.data:', resumeRequest.data);
-            console.log('@@Front - noteRequest.data:', noteRequest.data);
+            // console.log('@@Front - pagesRequest.data:', pagesRequest.data);
+            // console.log('@@Front - resumeRequest.data:', resumeRequest.data);
+            // console.log('@@Front - noteRequest.data:', noteRequest.data);
 
             setPages(pagesRequest.data as PageInterface[]);
             setChat(chatRequest.data as ChatResponse[]);
