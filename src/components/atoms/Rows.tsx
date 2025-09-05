@@ -20,9 +20,8 @@ interface RowProps {
 
 const Rows = ({ currentPage, headerTitle, rowsData, handkeCreateRow }: RowProps) => {
     const global = useSelector<State, GlobalState>(globalSelector);
-
-    console.log(rowsData, 'rowsData');
     const isHistoryType = headerTitle === 'History';
+
     const rowList = (
         <Stack display={'flex'} flexDirection={'column'} gap={1}>
             {rowsData?.map((row, i) => <Row key={i} row={row} rowType={RowType.List} />)}
@@ -61,7 +60,7 @@ const Rows = ({ currentPage, headerTitle, rowsData, handkeCreateRow }: RowProps)
 
     return (
         <Stack display={'flex'} flexDirection={'column'} gap={2}>
-            <RenderWhen if={global.page.current.title === Page.Courses}>
+            <RenderWhen if={currentPage === Page.Courses}>
                 <H3 sx={{ fontWeight: '600' }}>{headerTitle}</H3>
             </RenderWhen>
             <Stack

@@ -1,14 +1,12 @@
 import Box from './Box';
 import { useDispatch, useSelector } from 'react-redux';
-import { directorySelector, globalSelector, State, userSelector } from '../../store/selector';
-import { GlobalState, setPreviousPage } from '../../store/global';
-import { Accordion, AccordionDetails, AccordionSummary, Button, Stack } from '@mui/material';
-import { H4, H5, H6, Text } from './Typography';
-import { Page } from '../../interface.global';
+import { directorySelector, State } from '../../store/selector';
+import { Text } from './Typography';
 import { CurrentItemId, DirectoryState, setCurrentItem } from '../../store/directory';
 import { Row } from '../../Page/Course/interface.directory';
 import { useNavigate } from 'react-router-dom';
 import { EllipsisText } from './Typography';
+import { usePage } from '../../hooks/usePage';
 
 interface RightListProps {
     row: Row;
@@ -18,27 +16,22 @@ interface RightListProps {
 const RightRow = ({ row, index }: RightListProps) => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const global = useSelector<State, GlobalState>(globalSelector);
     const directory = useSelector<State, DirectoryState>(directorySelector);
 
-    const previousPage = global.page.previous.title as string;
+    const { currentPage, getPreviousPage } = usePage();
+
+    const previousPage = getPreviousPage() as string;
     const previousItemId = directory.currentItemId[previousPage as keyof CurrentItemId];
 
     return (
         <Box
             onClick={() => {
                 dispatch(
-                    setPreviousPage({
-                        _id: row._id,
-                        title: global.page.previous.title,
-                    }),
-                );
-                dispatch(
                     setCurrentItem({
-                        [global.page.previous.title as keyof CurrentItemId]: row._id,
+                        [previousPage as keyof CurrentItemId]: row._id,
                     }),
                 );
-                navigate(`/${global.page.current.title}/${row._id}`);
+                navigate(`/${currentPage}/${row._id}`);
             }}
             sx={{
                 display: 'flex',

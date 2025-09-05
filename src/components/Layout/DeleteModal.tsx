@@ -54,7 +54,7 @@ const DeleteModal = () => {
                         color: (theme) => theme.palette.white.main,
                     }}
                 >
-                    Are you sure you ?
+                    Are you sure ?
                 </Typography>
                 <Typography sx={{ mt: 2, color: (theme) => theme.palette.white.main }}>
                     This action cannot be undone. Do you want to delete the{' '}

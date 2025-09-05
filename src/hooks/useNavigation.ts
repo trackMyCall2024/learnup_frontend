@@ -1,13 +1,16 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
-import { setCurrentPage } from '../store/global';
+import { useDispatch, useSelector } from 'react-redux';
 import { Page } from '../interface.global';
 import { useCallback, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { UserState } from '../store/user';
 
 export const useNavigation = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const dispatch = useDispatch();
+    const queryClient = useQueryClient();
+    const user = useSelector((state: { user: UserState }) => state.user);
 
     // Fonction pour déterminer la page à partir de l'URL
     const getPageFromURL = useCallback((pathname: string): Page => {
@@ -44,8 +47,11 @@ export const useNavigation = () => {
     // Synchroniser l'état Redux avec l'URL courante
     const syncPageWithURL = useCallback(() => {
         const currentPageTitle = getPageFromURL(location.pathname);
-        dispatch(setCurrentPage({ title: currentPageTitle }));
-    }, [location.pathname, dispatch, getPageFromURL]);
+
+        // Invalider les queries pour forcer le refetch des données
+        queryClient.invalidateQueries({ queryKey: ['getRows'] });
+        queryClient.invalidateQueries({ queryKey: ['getHistory'] });
+    }, [location.pathname, dispatch, getPageFromURL, queryClient]);
 
     // Synchroniser à chaque changement de location
     useEffect(() => {
@@ -55,12 +61,18 @@ export const useNavigation = () => {
     // Fonction pour naviguer en arrière avec synchronisation automatique
     const navigateBack = useCallback(() => {
         navigate(-1);
+        // La synchronisation se fera automatiquement via le useEffect
+    }, [navigate]);
+
+    const handleBackToCourse = useCallback(() => {
+        navigate(`/courses/${user._id}`);
     }, [navigate]);
 
     // Fonction pour naviguer vers une URL spécifique avec synchronisation
     const navigateTo = useCallback(
         (to: string) => {
             navigate(to);
+            // La synchronisation se fera automatiquement via le useEffect
         },
         [navigate],
     );
@@ -80,5 +92,6 @@ export const useNavigation = () => {
         syncPageWithURL,
         getPageFromURL,
         currentPath: location.pathname,
+        handleBackToCourse,
     };
 };

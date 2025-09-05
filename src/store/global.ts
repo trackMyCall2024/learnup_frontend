@@ -2,18 +2,43 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Page } from '../interface.global';
 import { DirectoryType } from '../Page/Course/interface.directory';
 
-const path = `${window.location.origin}${window.location.pathname}`;
-const currentPage = path.split('/')[3] ?? Page.Dashboard;
+// Fonction pour déterminer la page à partir de l'URL de manière plus robuste
+const getCurrentPageFromURL = (): Page => {
+    const pathname = window.location.pathname;
+    const pathSegments = pathname.split('/').filter((segment) => segment !== '');
+
+    if (pathSegments.length === 0) return Page.Dashboard;
+
+    const firstSegment = pathSegments[0];
+
+    switch (firstSegment) {
+        case 'dashboard':
+            return Page.Dashboard;
+        case 'courses':
+            return Page.Courses;
+        case 'chapters':
+            return Page.Chapters;
+        case 'sections':
+            return Page.Sections;
+        case 'section':
+            return Page.Section;
+        case 'social':
+            return Page.Social;
+        case 'profile':
+            return Page.Profile;
+        case 'blocker':
+            return Page.Blocker;
+        case 'settings':
+            return Page.Settings;
+        default:
+            return Page.Dashboard;
+    }
+};
+
+const currentPage = getCurrentPageFromURL();
 
 export interface GlobalState {
     page: {
-        current: {
-            title: Page;
-        };
-        previous: {
-            _id: string; // Previous course ID, chapter ID, section ID to get data
-            title: Page | RowPage | null;
-        };
         next: {
             _id: string; // Next course ID, chapter ID, section ID to get data
             title: Page | RowPage | null;
@@ -37,7 +62,12 @@ export interface GlobalState {
             _id: string;
             name: string;
             type: DirectoryType;
-        }
+        };
+    };
+    errorModal: {
+        isOpen: boolean;
+        title: string;
+        message: string;
     };
 }
 
@@ -61,13 +91,6 @@ const loadRecorderFromStorage = () => {
 
 const initialState: GlobalState = {
     page: {
-        current: {
-            title: currentPage as Page,
-        },
-        previous: {
-            _id: '',
-            title: null,
-        },
         next: {
             _id: '',
             title: null,
@@ -91,6 +114,11 @@ const initialState: GlobalState = {
             type: DirectoryType.Course,
         },
     },
+    errorModal: {
+        isOpen: false,
+        title: '',
+        message: '',
+    },
 };
 
 export type RowPage = Page.Courses | Page.Chapters | Page.Sections;
@@ -99,24 +127,9 @@ export const userSlice = createSlice({
     name: 'global',
     initialState,
     reducers: {
-        // TODO - merge 3 methods to 1 method -> set with switch case
-        setCurrentPage: (
-            state: GlobalState,
-            action: PayloadAction<GlobalState['page']['current']>,
-        ) => {
-            state.page.current = action.payload;
-            return state;
-        },
         // Half page
         setNextPage: (state: GlobalState, action: PayloadAction<GlobalState['page']['next']>) => {
             state.page.next = action.payload;
-            return state;
-        },
-        setPreviousPage: (
-            state: GlobalState,
-            action: PayloadAction<GlobalState['page']['previous']>,
-        ) => {
-            state.page.previous = action.payload;
             return state;
         },
         setNavbarEnlarged: (
@@ -157,14 +170,30 @@ export const userSlice = createSlice({
             }
             return state;
         },
-        setDeleteModal: (
+        setDeleteModalContent: (
             state: GlobalState,
             action: PayloadAction<GlobalState['deleteModal']['content']>,
         ) => {
             state.deleteModal.content = action.payload;
             return state;
         },
-        setDeleteModalOpen: (state: GlobalState, action: PayloadAction<GlobalState['deleteModal']['isOpen']>) => {
+        setErrorModalOpen: (
+            state: GlobalState,
+            action: PayloadAction<{
+                isOpen: GlobalState['errorModal']['isOpen'];
+                title: GlobalState['errorModal']['title'];
+                message: GlobalState['errorModal']['message'];
+            }>,
+        ) => {
+            state.errorModal.isOpen = action.payload.isOpen;
+            state.errorModal.title = action.payload.title;
+            state.errorModal.message = action.payload.message;
+            return state;
+        },
+        setDeleteModalOpen: (
+            state: GlobalState,
+            action: PayloadAction<GlobalState['deleteModal']['isOpen']>,
+        ) => {
             state.deleteModal.isOpen = action.payload;
             return state;
         },
@@ -177,25 +206,33 @@ export const userSlice = createSlice({
             };
             return state;
         },
-        setDeleteModalIsLoading: (state: GlobalState, action: PayloadAction<GlobalState['deleteModal']['isLoading']>) => {
+        setDeleteModalIsLoading: (
+            state: GlobalState,
+            action: PayloadAction<GlobalState['deleteModal']['isLoading']>,
+        ) => {
             state.deleteModal.isLoading = action.payload;
+            return state;
+        },
+        setErrorModalClose: (state: GlobalState) => {
+            state.errorModal.isOpen = false;
+            state.errorModal.message = '';
             return state;
         },
     },
 });
 
 export const {
-    setCurrentPage,
     setNextPage,
-    setPreviousPage,
     setNavbarEnlarged,
     setIsHalfPageIsOpen,
     setIsLessonZoomed,
     setIsRecorderOpen,
-    setDeleteModal,
+    setDeleteModalContent,
     setDeleteModalOpen,
     setDeleteModalClose,
     setDeleteModalIsLoading,
+    setErrorModalOpen,
+    setErrorModalClose,
 } = userSlice.actions;
 
 export default userSlice.reducer;

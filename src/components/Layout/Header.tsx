@@ -31,7 +31,7 @@ const Header = ({ titleFromHalfPage, isHalfPageIsOpen }: HeaderProps) => {
     const directory = useSelector<State, DirectoryState>(directorySelector);
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const { handleGoToNext } = usePage();
+    const { handleGoToNext, currentPage } = usePage();
 
     const history = directory.history.current;
 
@@ -70,7 +70,7 @@ const Header = ({ titleFromHalfPage, isHalfPageIsOpen }: HeaderProps) => {
         }
     }, [global.navbar.isEnlarged]);
 
-    console.log('global.page.current.title', global.page.current.title);
+    console.log('currentPage', currentPage);
 
     return (
         <Stack
@@ -87,9 +87,9 @@ const Header = ({ titleFromHalfPage, isHalfPageIsOpen }: HeaderProps) => {
         >
             <RenderWhen
                 if={
-                    global.page.current.title === Page.Chapters ||
-                    global.page.current.title === Page.Sections ||
-                    global.page.current.title === Page.Section
+                    currentPage === Page.Chapters ||
+                    currentPage === Page.Sections ||
+                    currentPage === Page.Section
                 }
             >
                 <CustomMenu />
@@ -131,7 +131,7 @@ const Header = ({ titleFromHalfPage, isHalfPageIsOpen }: HeaderProps) => {
             <H1>
                 {titleFromHalfPage
                     ? getCapitalizeCase(titleFromHalfPage as string)
-                    : getCapitalizeCase(global.page.current.title)}
+                    : getCapitalizeCase(currentPage)}
             </H1>
         </Stack>
     );

@@ -1,6 +1,6 @@
 import { Box, Button, Stack, Typography } from '@mui/material';
 import Navbar from './components/Layout/Navbar';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getUser, setAuthToken } from './protocol/api';
 import { useDispatch, useSelector } from 'react-redux';
@@ -24,6 +24,9 @@ import Recorder from './components/Layout/Recorder';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import DeleteModal from './components/Layout/DeleteModal';
 import { useNavigation } from './hooks/useNavigation';
+import ErrorModal from './components/atoms/ErrorModal';
+import { getCurrentPageFromURL } from './utils/utils';
+import { Page } from './interface.global';
 
 function App() {
     const { isAuthenticated, isLoading, user, loginWithRedirect, getAccessTokenSilently } =
@@ -32,6 +35,8 @@ function App() {
     const global = useSelector<State, GlobalState>(globalSelector);
     const dispatch = useDispatch();
     const isModalOpen = useSelector<State, RecordManagerState>(recordManagerSelector).isModalOpen;
+    const location = useLocation();
+    const currentPage = getCurrentPageFromURL(location.pathname);
 
     // Activer les raccourcis clavier
     useKeyboardShortcuts();
@@ -107,6 +112,9 @@ function App() {
                 )}
                 <RenderWhen if={global.deleteModal.isOpen}>
                     <DeleteModal />
+                </RenderWhen>
+                <RenderWhen if={global.errorModal.isOpen}>
+                    <ErrorModal />
                 </RenderWhen>
                 <Recorder />
             </>

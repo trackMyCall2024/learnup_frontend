@@ -13,7 +13,7 @@ export const getCapitalizeCase = (text?: string): string => {
     return `${firstLetter}${rest}`;
 };
 
-export const getController = (currentPage: string) => {
+export const getController = (currentPage: string|undefined) => {
     const pageElement = pages.find(
         (page) => page.name.toLowerCase() === currentPage?.toLowerCase(),
     );
@@ -95,3 +95,32 @@ export function getDirectoryByPage(page: string): DirectoryType {
             return DirectoryType.Course;
     }
 }
+
+export const getCurrentPageFromURL = (pathname: string): Page => {
+    const pathSegments = pathname.split('/').filter((segment) => segment !== '');
+    if (pathSegments.length === 0) return Page.Dashboard;
+
+    const firstSegment = pathSegments[0];
+    switch (firstSegment) {
+        case 'dashboard':
+            return Page.Dashboard;
+        case 'courses':
+            return Page.Courses;
+        case 'chapters':
+            return Page.Chapters;
+        case 'sections':
+            return Page.Sections;
+        case 'section':
+            return Page.Section;
+        case 'social':
+            return Page.Social;
+        case 'profile':
+            return Page.Profile;
+        case 'blocker':
+            return Page.Blocker;
+        case 'settings':
+            return Page.Settings;
+        default:
+            return Page.Dashboard;
+    }
+};

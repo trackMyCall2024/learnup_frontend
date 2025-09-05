@@ -35,17 +35,17 @@ export enum HistoryType {
 const Row = ({ rowType, row }: RowProps) => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const { handleGoToNext } = usePage();
+    const { handleGoToNext, currentPage } = usePage();
 
     const global = useSelector<State, GlobalState>(globalSelector);
-    const historyType = global.page.current.title as string;
+    const historyType = currentPage as string;
 
     const handleClick = () => {
         dispatch(
             setNextPage({
                 _id: row._id,
-                title: getNextPage(global.page.current.title) as RowPage,
-                isOpen: global.page.current.title === Page.Sections ? false : true,
+                title: getNextPage(currentPage) as RowPage,
+                isOpen: currentPage === Page.Sections ? false : true,
             }),
             dispatch(
                 setCurrentHistory({
@@ -55,11 +55,11 @@ const Row = ({ rowType, row }: RowProps) => {
             ),
             dispatch(
                 setCurrentItem({
-                    [global.page.current.title]: row._id,
+                    [currentPage]: row._id,
                 }),
             ),
         );
-        if (global.page.current.title === Page.Sections) {
+        if (currentPage === Page.Sections) {
             handleGoToNext(() => navigate(`/section/${row._id}`));
         } else {
             dispatch(setIsHalfPageIsOpen(true));

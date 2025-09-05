@@ -1,20 +1,18 @@
 import { useEffect, useState } from 'react';
-import { useSelector } from 'react-redux';
-import { globalSelector, State, userSelector } from '../../store/selector';
-import { GlobalState } from '../../store/global';
-import { useQuery } from '@tanstack/react-query';
+import { useDispatch, useSelector } from 'react-redux';
+import { globalSelector, State } from '../../store/selector';
+import { GlobalState, setErrorModalOpen } from '../../store/global';
 import { Stack } from '@mui/material';
 import Search from '../../components/atoms/Search';
-import { createDirectory, getHistory, getRows } from '../../protocol/api';
+import { createDirectory, getDirectory } from '../../protocol/api';
 import { Page } from '../../interface.global';
 import RenderWhen from '../../components/atoms/RenderWhen';
-import { useParams } from 'react-router-dom';
 import Rows from '../../components/atoms/Rows';
 import { Row } from './interface.directory';
-import { UserState } from '../../store/user';
 import RightNavbar from '../../components/atoms/RightNavbar';
-import { getHistoryType, getDirectoryType } from '../../utils/utils';
+import { getDirectoryType } from '../../utils/utils';
 import { usePage } from '../../hooks/usePage';
+import { useDirectoryData } from '../../hooks/useDirectoryData';
 import { useMutation } from '@tanstack/react-query';
 import { DirectoryRequest } from '../../protocol/api.type';
 
@@ -27,43 +25,34 @@ interface DirectoryProps {
 const Directory = ({ halfPageIsOpen, idFromHalfPage, headerFromHalfPage }: DirectoryProps) => {
     const [pagination, setPagination] = useState({ page: 1, limit: 20 });
     const [localRows, setLocalRows] = useState<Row[]>([]);
-
-    // QUERY
-    const { id: idFromUrl } = useParams();
-    const parentId = idFromHalfPage ?? (idFromUrl as string);
+    const [filterSearch, setFilterSearch] = useState<string>('');
+    const global = useSelector<State, GlobalState>(globalSelector);
 
     // STORE
-    const global = useSelector<State, GlobalState>(globalSelector);
-    const user = useSelector<State, UserState>(userSelector);
-    const currentPage = halfPageIsOpen
-        ? (global.page.next.title as string)
-        : global.page.current.title;
+    const dispatch = useDispatch();
+    const { currentPage } = usePage();
 
-    // HOOKS
-    const [filterSearch, setFilterSearch] = useState<string>('');
-    const { handleBackToCourses } = usePage();
+    // Utiliser le hook personnalisé pour les données
+    const { directoryExists, rows, history, parentId, isLoading } = useDirectoryData(
+        filterSearch,
+        pagination,
+        halfPageIsOpen,
+        idFromHalfPage,
+    );
 
-    // REQUESTS
-    const rows = useQuery({
-        queryKey: ['getRows', parentId, filterSearch, pagination.page, pagination.limit],
-        queryFn: () =>
-            getRows(
-                getDirectoryType(currentPage),
-                parentId,
-                filterSearch,
-                pagination.page,
-                pagination.limit,
-            ),
-        enabled: !!global.page,
-    });
-
-    const history = useQuery({
-        queryKey: ['getHistory', currentPage],
-        queryFn: () => getHistory(getHistoryType(currentPage), user._id),
-        refetchOnMount: true,
-        refetchOnWindowFocus: true,
-        enabled: currentPage === Page.Courses,
-    });
+    useEffect(() => {
+        console.log('@@dd isLoading', isLoading);
+        console.log('@@dd directoryExists', directoryExists);
+        if (isLoading === false && directoryExists === false) {
+            dispatch(
+                setErrorModalOpen({
+                    isOpen: true,
+                    title: 'Not found',
+                    message: 'The directory cannot be found or has been deleted',
+                }),
+            );
+        }
+    }, [directoryExists, dispatch, isLoading]);
 
     const newRow = (): DirectoryRequest => {
         return {
@@ -82,7 +71,9 @@ const Directory = ({ halfPageIsOpen, idFromHalfPage, headerFromHalfPage }: Direc
         },
         onSuccess: (data) => {
             const createdRowWithId: Row = { ...newRow(), _id: data.directory._id };
-            setLocalRows(localRows.map((row) => (row._id === data.tmp_id ? createdRowWithId : row)));
+            setLocalRows(
+                localRows.map((row) => (row._id === data.tmp_id ? createdRowWithId : row)),
+            );
         },
     });
 
@@ -91,16 +82,15 @@ const Directory = ({ halfPageIsOpen, idFromHalfPage, headerFromHalfPage }: Direc
     };
 
     const haveRows = !rows.isLoading && !!rows.data;
-    const haveHistory = !!history.data?.length;
+    const haveHistory = !!history.data && (history.data as Row[]).length > 0;
     const canOpenRightNavbar = !halfPageIsOpen && currentPage !== Page.Courses;
 
+    // Reset filter search and pagination when URL changes
     useEffect(() => {
         setFilterSearch('');
-
-        if (canOpenRightNavbar && !global.page.previous.title) {
-            handleBackToCourses();
-        }
-    }, [canOpenRightNavbar, global.page.previous.title]);
+        setPagination({ page: 1, limit: 20 });
+        setLocalRows([]);
+    }, [parentId, canOpenRightNavbar]);
 
     useEffect(() => {
         if (rows.data) {
@@ -127,7 +117,7 @@ const Directory = ({ halfPageIsOpen, idFromHalfPage, headerFromHalfPage }: Direc
                             headerTitle={`All ${
                                 headerFromHalfPage
                                     ? (global.page.next.title as Page)
-                                    : global.page.current.title
+                                    : currentPage
                             }`}
                             rowsData={localRows}
                             handkeCreateRow={handleCreateRow}

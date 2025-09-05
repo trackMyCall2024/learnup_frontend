@@ -1,23 +1,19 @@
-import { useSelector } from 'react-redux';
+
 import Box from './Box';
-import { directorySelector, globalSelector, State, userSelector } from '../../store/selector';
-import { GlobalState } from '../../store/global';
-import { UserState } from '../../store/user';
 import { useQuery } from '@tanstack/react-query';
-import { getCapitalizeCase, getController, getDirectoryType } from '../../utils/utils';
-import { getRows } from '../../protocol/api';
+import { getCapitalizeCase, getDirectoryType } from '../../utils/utils';
+import { getParents } from '../../protocol/api';
 import { Stack } from '@mui/material';
 import { H4 } from './Typography';
 import { Page } from '../../interface.global';
-import { CurrentItemId, DirectoryState } from '../../store/directory';
 import { Row } from '../../Page/Course/interface.directory';
 import RenderWhen from './RenderWhen';
 import { SectionProps } from '../../Page/Section/interface.type';
 import RightRow from './RightRow';
 import Tools, { ToolsState } from './Tools';
-import { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBook } from '@fortawesome/free-solid-svg-icons';
+import { usePage } from '../../hooks/usePage';
 
 interface RightNavBarProps {
     section?: SectionProps;
@@ -25,34 +21,21 @@ interface RightNavBarProps {
 }
 
 const RightNavbar = ({ section, tools: toolsState }: RightNavBarProps) => {
-    const global = useSelector<State, GlobalState>(globalSelector);
-    const user = useSelector<State, UserState>(userSelector);
-    const directory = useSelector<State, DirectoryState>(directorySelector);
+    const { getPreviousPage, currentPage, currentId } = usePage();
+    const isSectionPage = currentPage === Page.Section;
 
-    const isSectionPage = global.page.current.title === Page.Section;
+    const previousPage = getPreviousPage()?.toString() as string;
 
-    const previousPage = global.page.previous.title as string;
-    const filterId = getPreviousIdFetching(
-        global.page.current.title,
-        directory.currentItemId,
-        user._id,
-    );
+    console.log('@@Front - currentId:', currentId, getDirectoryType(previousPage));
 
-    const controller = getController(previousPage) as string;
-    const [pagination, setPagination] = useState({ page: 1, limit: 10 });
     // REQUESTS
     const rows = useQuery({
-        queryKey: ['getRows', filterId, pagination],
-        queryFn: () =>
-            getRows(
-                getDirectoryType(previousPage),
-                filterId,
-                '',
-                pagination.page,
-                pagination.limit,
-            ),
-        enabled: !!controller && !isSectionPage,
+        queryKey: ['getParents', currentId],
+        queryFn: () => getParents(currentId),
+        enabled: !!currentId && !isSectionPage,
     });
+
+    console.log('@@Front - rows:', rows.data);
 
     const previousPages = rows.data?.map((row: Row, i: number) => (
         <RightRow key={i} row={row} index={i} />
@@ -94,23 +77,3 @@ const RightNavbar = ({ section, tools: toolsState }: RightNavBarProps) => {
 };
 
 export default RightNavbar;
-
-function getPreviousIdFetching(
-    currentPage: Page,
-    listCurrentId: CurrentItemId,
-    userId: string,
-): string {
-    switch (currentPage) {
-        case Page.Chapters:
-            return userId;
-
-        case Page.Sections:
-            return listCurrentId[Page.Courses];
-
-        case Page.Section:
-            return listCurrentId[Page.Chapters];
-
-        default:
-            return '';
-    }
-}

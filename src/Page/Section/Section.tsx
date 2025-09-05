@@ -36,7 +36,7 @@ const Section = () => {
     const sectionId = id as string;
 
     // REQUESTS
-    const directoryRequest = useQuery({
+    const { data: directoryRequest } = useQuery({
         queryKey: ['getDirectory', sectionId],
         queryFn: () => getDirectory(sectionId),
         enabled: !!sectionId,
@@ -148,13 +148,16 @@ const Section = () => {
             set: setSelectedGame,
         },
         addPage: () => {
-            setPages((prev) => [...prev, {
-                _id: '',
-                title: 'New Page',
-                data: '',
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            }]);
+            setPages((prev) => [
+                ...prev,
+                {
+                    _id: '',
+                    title: 'New Page',
+                    data: '',
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                },
+            ]);
             // setPageIndex(pages.length - 1);
         },
     };
@@ -173,7 +176,7 @@ const Section = () => {
     };
 
     const haveSection =
-        !!directoryRequest?.data?._id &&
+        !!directoryRequest?._id &&
         !!pagesRequest?.data &&
         !!resumeRequest?.data &&
         !!noteRequest?.data &&
@@ -183,7 +186,7 @@ const Section = () => {
     console.log('@@Front - resumeRequest.data:', resumeRequest.data);
     console.log('@@Front - noteRequest.data:', noteRequest.data);
     console.log('@@Front - chatRequest.data:', chatRequest.data);
-    console.log('@@Front - directoryRequest.data:', directoryRequest.data);
+    console.log('@@Front - directoryRequest.data:', directoryRequest);
 
     console.log('@@Front - haveSection:', haveSection);
 
@@ -197,7 +200,7 @@ const Section = () => {
             setChat(chatRequest.data as ChatResponse[]);
             setResume(resumeRequest.data as ResumeResponse);
             setNote(noteRequest.data as NoteResponse);
-            setDirectory(directoryRequest.data as DirectoryResponse);
+            setDirectory(directoryRequest as DirectoryResponse);
 
             console.log('@@Front - pages state after set:', pagesRequest.data);
         }

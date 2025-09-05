@@ -1,20 +1,20 @@
 import { useDispatch, useSelector } from 'react-redux';
-import { GlobalState, setCurrentPage, setNextPage, setPreviousPage } from '../store/global';
-import { directorySelector, globalSelector, State, userSelector } from '../store/selector';
+import { setNextPage } from '../store/global';
 import { Page } from '../interface.global';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { UserState } from '../store/user';
-import { CurrentItemId, DirectoryState } from '../store/directory';
 import { useEffect, useCallback } from 'react';
+import { State } from '../store/selector';
+import { UserState } from '../store/user';
+import { userSelector } from '../store/selector';
 
 export const usePage = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const location = useLocation();
 
-    const global = useSelector<State, GlobalState>(globalSelector);
+    const currentPage = window.location.pathname.split('/')[1] as Page;
+    const currentId = window.location.pathname.split('/')[2] as Page;
     const user = useSelector<State, UserState>(userSelector);
-    const directory = useSelector<State, DirectoryState>(directorySelector);
 
     // Fonction pour déterminer la page à partir de l'URL
     const getPageFromURL = useCallback((pathname: string): Page => {
@@ -53,44 +53,23 @@ export const usePage = () => {
         const currentPageTitle = getPageFromURL(location.pathname);
 
         // Mettre à jour l'état Redux seulement si la page a changé
-        if (global.page.current.title !== currentPageTitle) {
-            console.log('Syncing page state:', global.page.current.title, '->', currentPageTitle);
-            dispatch(setCurrentPage({ title: currentPageTitle }));
+        if (currentPage !== currentPageTitle) {
+            console.log('Syncing page state:', currentPage, '->', currentPageTitle);
         }
-    }, [location.pathname, global.page.current.title, dispatch, getPageFromURL]);
+    }, [location.pathname, currentPage, dispatch, getPageFromURL]);
 
     // Synchroniser à chaque changement de location
     useEffect(() => {
         syncPageWithURL();
     }, [syncPageWithURL]);
 
-    const previousPage = `${global.page.current.title}` as Page;
-    const nextPage = (
-        global.page.next.title
-            ? `${global.page.next.title}`
-            : getNextPage(global.page.current.title)
-    ) as Page;
-    const previousId =
-        global.page.current.title === Page.Courses
-            ? user._id
-            : directory.currentItemId[previousPage as keyof CurrentItemId];
+    const previousPage = `${currentPage}` as Page;
 
     const resetPageStore = () => {
         dispatch(setNextPage({ _id: '', title: null, isOpen: false }));
-        dispatch(setPreviousPage({ _id: '', title: null }));
-    };
-
-    const setPageStore = (handleType: 'previous' | 'next') => {
-        if (handleType === 'next') {
-            dispatch(setCurrentPage({ title: nextPage }));
-        } else {
-            dispatch(setCurrentPage({ title: previousPage }));
-        }
-        dispatch(setPreviousPage({ _id: previousId, title: previousPage }));
     };
 
     const handleGoToNext = (onEnd?: () => void) => {
-        setPageStore('next');
         dispatch(setNextPage({ _id: '', title: null, isOpen: false }));
 
         if (onEnd) {
@@ -99,8 +78,6 @@ export const usePage = () => {
     };
 
     const handleGoToPrevious = (onEnd?: () => void) => {
-        setPageStore('previous');
-
         if (onEnd) {
             onEnd();
         }
@@ -108,8 +85,8 @@ export const usePage = () => {
 
     const handleBackToCourses = (onEnd?: () => void) => {
         resetPageStore();
-        dispatch(setCurrentPage({ title: previousPage }));
-        navigate(`courses/${user._id}`);
+        // Ne pas changer la page courante automatiquement, laisser la navigation se faire naturellement
+        navigate(`/courses/${user._id}`);
 
         if (onEnd) {
             onEnd();
@@ -131,6 +108,28 @@ export const usePage = () => {
         [navigate],
     );
 
+    const getPreviousPage = (): Page | null => {
+        if (!currentPage) {
+            handleBackToCourses();
+            return null;
+        }
+
+        switch (currentPage) {
+            case Page.Dashboard:
+                return Page.Dashboard;
+            case Page.Courses:
+                return Page.Dashboard;
+            case Page.Chapters:
+                return Page.Courses;
+            case Page.Sections:
+                return Page.Chapters;
+            case Page.Section:
+                return Page.Sections;
+            default:
+                return Page.Dashboard;
+        }
+    };
+
     return {
         handleGoToNext,
         handleGoToPrevious,
@@ -139,7 +138,9 @@ export const usePage = () => {
         navigateBack,
         navigateTo,
         getPageFromURL,
-        currentPage: global.page.current.title,
+        getPreviousPage,
+        currentPage: currentPage as Page,
+        currentId: currentId as string,
     };
 };
 

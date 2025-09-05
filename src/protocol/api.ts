@@ -79,6 +79,11 @@ export const getRows = async (
     return res.data;
 };
 
+export const getParents = async (child_id: string) => {
+    const res = await nestServer.get(`directory/parents/${child_id}`);
+    return res.data;
+};
+
 export const getHistory = async (historyType: HistoryType, userID: string) => {
     const res = await nestServer.get<Row[]>(`history/${userID}?directory_type=${historyType}`);
     return res.data;
@@ -96,7 +101,12 @@ export const putHistory = async (historyType: string, historyId: string, filterI
 // FETCH ONE DIRECTORY
 export const getDirectory = async (parentId: string) => {
     const res = await nestServer.get<DirectoryResponse>(`directory/${parentId}`);
-    console.log('@@res', res.data);
+    return res.data;
+};
+
+export const checkDirectoryExists = async (parentId: string) => {
+    const res = await nestServer.get<boolean>(`directory/exists/${parentId}`);
+    console.log('@@checkDirectoryExists', res.data);
     return res.data;
 };
 

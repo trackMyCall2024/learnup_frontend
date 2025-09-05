@@ -9,7 +9,7 @@ import {
     Stack,
     Switch,
 } from '@mui/material';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { faGraduationCap } from '@fortawesome/free-solid-svg-icons';
 import { faBook } from '@fortawesome/free-solid-svg-icons';
 import { faUser } from '@fortawesome/free-solid-svg-icons';
@@ -18,7 +18,7 @@ import { faGear } from '@fortawesome/free-solid-svg-icons';
 import { faBan } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useDispatch, useSelector } from 'react-redux';
-import { GlobalState, setCurrentPage, setIsRecorderOpen } from '../../store/global';
+import { GlobalState, setIsRecorderOpen } from '../../store/global';
 import { globalSelector, State, userSelector } from '../../store/selector';
 import { UserState } from '../../store/user';
 import { Page } from '../../interface.global';
@@ -26,12 +26,14 @@ import Ellipsis from '../atoms/Ellipsis';
 import { useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import BtnExpandNavbar from '../atoms/BtnExpandNavbar';
+import { usePage } from '../../hooks/usePage';
 
 const Navbar = () => {
     const dispatch = useDispatch();
+    const navigate = useNavigate();
+    const { currentPage } = usePage();
     const global = useSelector<State, GlobalState>(globalSelector);
     const user = useSelector<State, UserState>(userSelector);
-
     const name = `${user.firstname} ${user.lastname}`;
     const navbarRef = useRef<HTMLDivElement>(null);
     const boxRef = useRef<HTMLDivElement>(null);
@@ -195,14 +197,14 @@ const Navbar = () => {
                                 justifyContent: 'center',
                             }}
                             disablePadding
-                            onClick={() => dispatch(setCurrentPage({ title: item.value as Page }))}
+                            onClick={() => navigate(`/${item.value}/${user._id}`)}
                         >
                             <ListItemButton
                                 component={Link}
                                 to={`${item.value}/${user._id}`}
                                 sx={{
                                     backgroundColor: (th) =>
-                                        getPageToBeSelected(global.page.current.title) ===
+                                        getPageToBeSelected(currentPage) ===
                                         item.value
                                             ? '#1D1D1D'
                                             : '#111111',

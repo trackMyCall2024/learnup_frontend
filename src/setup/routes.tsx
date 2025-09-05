@@ -8,6 +8,35 @@ import Blocker from "../Page/Blocker/Blocker";
 import Settings from "../Page/Settings/Settings";
 import Directory from "../Page/Course/Directory";
 import Section from "../Page/Section/Section";
+import { Page } from "../interface.global";
+import NotFound from "../Page/NotFound/NotFound";
+
+const checkPageFromURL = (path: string) => {
+    const pathArray = path.split('/');
+    const page = pathArray[1];
+    console.log('page', page);
+    
+    switch (page) {
+        case 'dashboard':
+            return Page.Dashboard;
+        case 'courses':
+            return Page.Courses;
+        case 'chapters':
+            return Page.Chapters;
+        case 'sections':
+            return Page.Sections;
+        case 'section':
+            return Page.Section;
+        case 'social':
+            return Page.Social;
+        case 'profile':
+            return Page.Profile;
+        case 'settings':
+            return Page.Settings;
+        default:
+            return null;
+    }
+};
 
 const AppRoutes = createBrowserRouter([
     {
@@ -52,8 +81,12 @@ const AppRoutes = createBrowserRouter([
                 element: <Settings/>,
             },
             {
+                path: "/404",
+                element: <NotFound/>,
+            },
+            {
                 path: "*",
-                element: <></>,
+                element: <NotFound/>,
             },
         ],
     },

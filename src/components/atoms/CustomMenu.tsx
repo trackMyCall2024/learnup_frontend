@@ -9,38 +9,36 @@ import { Text } from './Typography';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEllipsis } from '@fortawesome/free-solid-svg-icons';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import {
-    GlobalState,
-    setDeleteModal,
-    setDeleteModalClose,
-    setDeleteModalOpen,
-} from '../../store/global';
-import { useDispatch, useSelector } from 'react-redux';
+import { setDeleteModalContent, setDeleteModalClose, setDeleteModalOpen } from '../../store/global';
+import { useDispatch } from 'react-redux';
 import { DirectoryType } from '../../Page/Course/interface.directory';
 import { getDirectoryByPage, getDirectoryType, getPageName } from '../../utils/utils';
 import { Page } from '../../interface.global';
 import { useQuery } from '@tanstack/react-query';
 import { getDirectory } from '../../protocol/api';
+import { useLocation } from 'react-router-dom';
 
 const CustomMenu = () => {
     const dispatch = useDispatch();
+    const location = useLocation();
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
     const [selectedIndex, setSelectedIndex] = React.useState(0); // Changé de 1 à 0
-    const global = useSelector((state: { global: GlobalState }) => state.global);
     const open = Boolean(anchorEl);
 
-    const directoryType = getDirectoryByPage(window.location.pathname.split('/')?.[1]);
-    const childId = window.location.pathname.split('/').pop();
+    const directoryType = getDirectoryByPage(location.pathname.split('/')?.[1]);
+    const childId = location.pathname.split('/').pop();
 
     console.log('@@@@directoryType', directoryType);
     console.log('@@@@childId', childId);
 
-    const { data: parentDirectory } = useQuery({
-        queryKey: ['parentDirectory'],
+    const { data: parentDirectory, error: parentDirectoryError } = useQuery({
+        queryKey: ['parentDirectory', childId],
         queryFn: () => getDirectory(childId as string),
-
         enabled: !!childId && !!directoryType,
+        retry: false, // Ne pas retry en cas d'erreur 404
     });
+
+    console.log('@@@@parentDirectory', parentDirectory);
 
     const handleClickListItem = (event: React.MouseEvent<HTMLElement>) => {
         setAnchorEl(event.currentTarget);
@@ -58,12 +56,16 @@ const CustomMenu = () => {
     };
 
     const handleOpenDeleteModal = () => {
-        console.log('global.page.previous.title', global.page.previous.title);
+        if (!parentDirectory) {
+            console.error('Parent directory not found');
+            return;
+        }
+        console.log('parentDirectory', parentDirectory);
         dispatch(
-            setDeleteModal({
-                _id: parentDirectory?._id as string,
-                name: parentDirectory?.name as string,
-                type: parentDirectory?.type as DirectoryType,
+            setDeleteModalContent({
+                _id: parentDirectory._id as string,
+                name: parentDirectory.name as string,
+                type: parentDirectory.type as DirectoryType,
             }),
         );
         dispatch(setDeleteModalOpen(true));
@@ -86,6 +88,12 @@ const CustomMenu = () => {
             <Text>Delete</Text>
         </Text>,
     ];
+
+    // Ne pas afficher le menu si le répertoire parent n'est pas trouvé
+    if (parentDirectoryError) {
+        console.log('Parent directory error:', parentDirectoryError);
+        return null;
+    }
 
     return (
         <Stack

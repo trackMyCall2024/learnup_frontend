@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { setNavbarEnlarged, setCurrentPage } from '../store/global';
+import { setNavbarEnlarged } from '../store/global';
 import { globalSelector, State } from '../store/selector';
 import { userSelector } from '../store/selector';
 
@@ -15,7 +15,7 @@ export const useKeyboardShortcuts = () => {
         const handleKeyDown = (e: KeyboardEvent) => {
 
             // cmd + k
-            if (e.key === 'k' && e.metaKey) {
+            if (e.key === 'k' && e.metaKey) {   
                 dispatch(setNavbarEnlarged(!global.navbar.isEnlarged));
             }
         };
