@@ -2,7 +2,13 @@ import { Button, Stack } from '@mui/material';
 import { Text } from './Typography';
 import CustomBtn from './CustomBtn';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faComment, faFileLines, faListUl, faPenToSquare, faPlus } from '@fortawesome/free-solid-svg-icons';
+import {
+    faComment,
+    faFileLines,
+    faListUl,
+    faPenToSquare,
+    faPlus,
+} from '@fortawesome/free-solid-svg-icons';
 import ToolBox from './ToolBox';
 import { SectionProps, SelectedGame, View } from '../../Page/Section/interface.type';
 import { Option, Select } from '@mui/joy';
@@ -19,9 +25,14 @@ export interface ToolsState {
         value: View;
         set: React.Dispatch<React.SetStateAction<View>>;
     };
-    pageIndex: {
-        value: number;
-        set: React.Dispatch<React.SetStateAction<number>>;
+    page: {
+        index: {
+            id: string;
+            value: number;
+            set: React.Dispatch<React.SetStateAction<number>>;
+        };
+        add: () => void;
+        remove: (pageId: string) => void;
     };
     openChat: {
         value: boolean;
@@ -35,7 +46,6 @@ export interface ToolsState {
         value: SelectedGame;
         set: React.Dispatch<React.SetStateAction<SelectedGame>>;
     };
-    addPage: () => void;
 }
 
 interface ToolsProps {
@@ -104,7 +114,11 @@ const Tools = ({ section, tools }: ToolsProps) => {
                 </Stack>
             </ToolBox>
 
-            <ToolBox title={'Pages'} disabled={tools.openChat.value} icon={<AutoStoriesIcon fontSize="small" />}>
+            <ToolBox
+                title={'Pages'}
+                disabled={tools.openChat.value}
+                icon={<AutoStoriesIcon fontSize="small" />}
+            >
                 <Stack
                     display={'flex'}
                     flexDirection={'row'}
@@ -119,25 +133,25 @@ const Tools = ({ section, tools }: ToolsProps) => {
                                 // minWidth: '40px',
                                 // minHeight: '46px',
                                 backgroundColor: (th) =>
-                                    tools.pageIndex.value === i
+                                    tools.page.index.value === i
                                         ? th.palette.background.default
                                         : 'initial',
                                 display: 'flex',
                                 flexDirection: 'row',
                                 gap: 1,
                             }}
-                            onClick={() => tools.pageIndex.set && tools.pageIndex.set(i)}
+                            onClick={() => tools.page.index.set && tools.page.index.set(i)}
                         >
                             <FontAwesomeIcon
                                 icon={faFileLines}
                                 style={{
-                                    color: tools.pageIndex.value === i ? '#EFEFEF' : 'initial',
+                                    color: tools.page.index.value === i ? '#EFEFEF' : 'initial',
                                 }}
                             />
                             <Text
                                 sx={{
                                     color: (th) =>
-                                        tools.pageIndex.value === i
+                                        tools.page.index.value === i
                                             ? th.palette.grey['200']
                                             : 'initial',
                                     fontWeight: '600',
@@ -152,7 +166,10 @@ const Tools = ({ section, tools }: ToolsProps) => {
                             backgroundColor: 'initial',
                             p: '10px',
                         }}
-                        onClick={tools.addPage}
+                        onClick={() => {
+                            tools.page.add();
+                            tools.page.index.set(tools.page.index.value + 1);
+                        }}
                     >
                         <FontAwesomeIcon icon={faPlus} />
                     </CustomBtn>
@@ -186,10 +203,7 @@ const Tools = ({ section, tools }: ToolsProps) => {
                 </Button>
             </ToolBox>
 
-            <ToolBox
-                title={'IA teacher'}
-                icon={<SchoolIcon fontSize="small" />}
-            >
+            <ToolBox title={'IA teacher'} icon={<SchoolIcon fontSize="small" />}>
                 <Button
                     size="small"
                     color="info"
@@ -215,7 +229,12 @@ const Tools = ({ section, tools }: ToolsProps) => {
                         tools.startedParty.value ? (
                             <CloseIcon />
                         ) : (
-                            <img draggable={false} src="/icons/white-analyze.svg" height={10} width={'auto'} />
+                            <img
+                                draggable={false}
+                                src="/icons/white-analyze.svg"
+                                height={10}
+                                width={'auto'}
+                            />
                         )
                     }
                     disabled={tools.openChat.value}

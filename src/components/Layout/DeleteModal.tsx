@@ -6,11 +6,12 @@ import { faTrash, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { deleteDirectory } from '../../protocol/api';
 import { useNavigation } from '../../hooks/useNavigation';
+import { useQueryClient } from '@tanstack/react-query';
 
 const DeleteModal = () => {
     const global = useSelector((state: { global: GlobalState }) => state.global);
     const dispatch = useDispatch();
-
+    const queryClient = useQueryClient();
     const { navigateBack } = useNavigation();
 
     const handleDelete = async () => {
@@ -18,6 +19,12 @@ const DeleteModal = () => {
         await deleteDirectory(global.deleteModal.content._id);
         dispatch(setDeleteModalIsLoading(false));
         dispatch(setDeleteModalClose());
+
+        if (global.recorder.isOpen) {
+            queryClient.invalidateQueries({ queryKey: ['load-courses'] });
+            queryClient.invalidateQueries({ queryKey: ['load-chapters'] });
+        }
+        
         navigateBack();
     };
 

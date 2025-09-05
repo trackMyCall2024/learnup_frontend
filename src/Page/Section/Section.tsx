@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 import {
     getChat,
@@ -6,9 +6,11 @@ import {
     getNote,
     getPages,
     getResume,
-    updateDirectory,
+    createDefaultPage,
     updateNote,
+    updatePage,
     updateResume,
+    deletePage,
 } from '../../protocol/api';
 import { debounce, Stack } from '@mui/material';
 import {
@@ -19,7 +21,7 @@ import {
     View,
 } from './interface.type';
 import RightNavbar from '../../components/atoms/RightNavbar';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import RenderWhen from '../../components/atoms/RenderWhen';
 import Box from '../../components/atoms/Box';
 import { ToolsState } from '../../components/atoms/Tools';
@@ -27,22 +29,21 @@ import Page from './Page';
 import Chat from './Chat';
 import {
     ChatResponse,
-    ChunkResponse,
     DirectoryResponse,
     NoteResponse,
-    PageResponse,
     ResumeResponse,
 } from '../../protocol/api.type';
-import { log } from 'console';
 import { State } from '../../store/selector';
 import { GlobalState, setIsLessonZoomed } from '../../store/global';
 import { globalSelector } from '../../store/selector';
 import { useDispatch, useSelector } from 'react-redux';
+import { getTmpId } from '../../utils/utils';
 
 const Section = () => {
     // QUERY
     const { id } = useParams();
     const sectionId = id as string;
+    const tmpId = useRef<string>('');
 
     // REQUESTS
     const { data: directoryRequest } = useQuery({
@@ -80,6 +81,42 @@ const Section = () => {
         retry: false,
     });
 
+    const createDefaultPageMutation = useMutation({
+        mutationFn: async (tmpId: string) => {
+            return await createDefaultPage(sectionId, tmpId);
+        },
+        onSuccess: (data) => {
+            const indexToBeUpdated = pages.findIndex((page) => page.tmp_id === data.tmp_id);
+            if (indexToBeUpdated === -1) {
+                return;
+            }
+            setPages((prev) => {
+                const newPages = [...prev];
+                const currentPage = newPages[indexToBeUpdated];
+                currentPage._id = data.page._id;
+                return newPages;
+            });
+        },
+        onError: (error) => {
+            // reomve item in pages with tmp_id
+            setPages((prev) => {
+                return prev.filter((page) => page.tmp_id !== tmpId.current);
+            });
+        },
+    });
+
+    const deletePageMutation = useMutation({
+        mutationKey: ['deletePage', sectionId],
+        mutationFn: async (pageId: string) => {
+            return await deletePage(pageId);
+        },
+        onSuccess: () => {
+            setPages((prev) => {
+                return prev.filter((page) => page.tmp_id !== tmpId.current);
+            });
+        },
+    });
+
     const [directory, setDirectory] = useState<DirectoryResponse | null>(null);
     const [resume, setResume] = useState<ResumeResponse | null>(null);
     const [note, setNote] = useState<NoteResponse | null>(null);
@@ -104,21 +141,30 @@ const Section = () => {
         debounce((controller: 'pages' | 'resume' | 'note', newText: string) => {
             switch (controller) {
                 case 'pages': {
-                    if (!pages[pageIndex]) {
+                    if (!pages[pageIndex]._id) {
                         return;
                     }
-                    // updatePages(pages[pageIndex]._id, { data: newText });
+                    console.log('@@Front - updatePage', pages[pageIndex]._id);
+                    updatePage(pages[pageIndex]._id, {
+                        _id: pages[pageIndex]._id,
+                        section: sectionId,
+                        data: newText,
+                    });
                     break;
                 }
                 case 'resume': {
-                    if (!resume) {
+                    if (!resume?._id) {
                         return;
                     }
-                    updateResume(resume._id, { _id: resume._id, section: sectionId, data: newText });
+                    updateResume(resume._id, {
+                        _id: resume._id,
+                        section: sectionId,
+                        data: newText,
+                    });
                     break;
                 }
                 case 'note': {
-                    if (!note) {
+                    if (!note?._id) {
                         return;
                     }
                     updateNote(note._id, { _id: note._id, section: sectionId, data: newText });
@@ -143,7 +189,7 @@ const Section = () => {
                     newPages[pageIndex] = newCurrentPage;
                     return newPages;
                 });
-                // debouncedUpdate('pages', newValue);
+                debouncedUpdate('pages', newValue);
                 break;
             }
 
@@ -182,9 +228,47 @@ const Section = () => {
             value: view,
             set: setView,
         },
-        pageIndex: {
-            value: pageIndex,
-            set: setPageIndex,
+        page: {
+            index: {
+                id: pages[pageIndex]?._id ?? '',
+                value: pageIndex,
+                set: setPageIndex,
+            },
+            add: async () => {
+                tmpId.current = getTmpId();
+                setPages((prev) => [
+                    ...prev,
+                    {
+                        tmp_id: tmpId.current,
+                        _id: '',
+                        section: sectionId,
+                        title: 'New Page',
+                        data: '',
+                    },
+                ]);
+
+                createDefaultPageMutation.mutate(tmpId.current);
+            },
+            remove: () => {
+                const pageId = pages[pageIndex]?._id;
+
+                if (!pageId) {
+                    return;
+                }
+
+                if (pages.length === 1) {
+                    // if only one page, clear the page and update the page
+                    const clearedPage = { ...pages[pageIndex], data: '' } as PageInterface;
+                    setPages([clearedPage]);
+                    updatePage(pageId, { _id: pageId, section: sectionId, data: '' });
+                    return;
+                }
+
+                setPages((prev) => prev.filter((page) => page._id !== pageId));
+                setPageIndex(pages.length > 1 ? pages.length - 2 : 0);
+
+                deletePageMutation.mutate(pageId);
+            },
         },
         openChat: {
             value: chatIsOpen,
@@ -197,19 +281,6 @@ const Section = () => {
         game: {
             value: selectedGame,
             set: setSelectedGame,
-        },
-        addPage: () => {
-            setPages((prev) => [
-                ...prev,
-                {
-                    _id: '',
-                    title: 'New Page',
-                    data: '',
-                    createdAt: new Date(),
-                    updatedAt: new Date(),
-                },
-            ]);
-            // setPageIndex(pages.length - 1);
         },
     };
 
@@ -229,8 +300,8 @@ const Section = () => {
     const haveSection =
         !!directoryRequest?._id &&
         !!pagesRequest?.data &&
-        // !!resumeRequest?.data &&
-        // !!noteRequest?.data &&
+        !!resumeRequest?.data &&
+        !!noteRequest?.data &&
         !!chatRequest?.data;
 
     console.log('@@Front - pagesRequest.data:', pagesRequest.data);
@@ -255,7 +326,7 @@ const Section = () => {
 
             console.log('@@Front - pages state after set:', pagesRequest.data);
         }
-    }, [haveSection, pageIndex]);
+    }, [haveSection]); // Remove pageIndex from dependencies
 
     return (
         <Stack display={'flex'} flex={1} flexDirection={'row'} gap={5}>

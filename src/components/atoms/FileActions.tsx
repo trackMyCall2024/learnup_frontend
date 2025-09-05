@@ -1,4 +1,9 @@
-import { faArrowDown, faExpand, faShareNodes } from '@fortawesome/free-solid-svg-icons';
+import {
+    faArrowDown,
+    faExpand,
+    faFileLines,
+    faShareNodes,
+} from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Button, Stack } from '@mui/material';
 import ShareIcon from '@mui/icons-material/Share';

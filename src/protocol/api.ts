@@ -11,6 +11,8 @@ import {
     NoteRequest,
     ResumeRequest,
     ResumeResponse,
+    PageRequest,
+    PageResponse,
 } from './api.type';
 import config from '../config';
 
@@ -183,6 +185,15 @@ export const createNote = async (sectionId: string) => {
     return res.data;
 };
 
+export const createDefaultPage = async (sectionId: string, tmp_id?: string): Promise<{ page: PageResponse; tmp_id: string }> => {
+    const res = await nestServer.post<PageResponse>(`/page`, {
+        section: sectionId,
+        data: '',
+        title: 'New page',
+    });
+    return { page: res.data, tmp_id: tmp_id ?? '' };
+};
+
 export const deleteDirectory = async (directoryId: string) => {
     const res = await nestServer.delete(`/directory/${directoryId}`);
     return res.data;
@@ -198,6 +209,11 @@ export const deleteNote = async (noteId: string) => {
     return res.data;
 };
 
+export const deletePage = async (pageId: string) => {
+    const res = await nestServer.delete(`/page/${pageId}`);
+    return res.data;
+};
+
 export const updateDirectory = async (directoryId: string, directory: DirectoryRequest) => {
     const res = await nestServer.put(`/directory/${directoryId}`, directory);
     return res.data;
@@ -210,5 +226,10 @@ export const updateResume = async (resumeId: string, resume: ResumeRequest) => {
 
 export const updateNote = async (noteId: string, note: NoteRequest) => {
     const res = await nestServer.put(`/note/${noteId}`, note);
+    return res.data;
+};
+
+export const updatePage = async (pageId: string, page: PageRequest) => {
+    const res = await nestServer.put(`/page/${pageId}`, page);
     return res.data;
 };

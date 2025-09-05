@@ -4,16 +4,16 @@ import { globalSelector, State } from '../../store/selector';
 import { GlobalState, setErrorModalOpen } from '../../store/global';
 import { Stack } from '@mui/material';
 import Search from '../../components/atoms/Search';
-import { createDirectory, createResume, createNote } from '../../protocol/api';
+import { createDirectory, createResume, createNote, createDefaultPage } from '../../protocol/api';
 import { Page } from '../../interface.global';
 import RenderWhen from '../../components/atoms/RenderWhen';
 import Rows from '../../components/atoms/Rows';
 import { Row } from './interface.directory';
 import RightNavbar from '../../components/atoms/RightNavbar';
-import { getDirectoryType } from '../../utils/utils';
+import { getDirectoryType, getTmpId } from '../../utils/utils';
 import { usePage } from '../../hooks/usePage';
 import { useDirectoryData } from '../../hooks/useDirectoryData';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { DirectoryRequest } from '../../protocol/api.type';
 
 interface DirectoryProps {
@@ -34,6 +34,8 @@ const Directory = ({ halfPageIsOpen, idFromHalfPage, headerFromHalfPage }: Direc
     const global = useSelector<State, GlobalState>(globalSelector);
     const tempId = useRef<string>('');
 
+    const queryClient = useQueryClient();
+
     // STORE
     const dispatch = useDispatch();
     const { currentPage } = usePage();
@@ -47,8 +49,6 @@ const Directory = ({ halfPageIsOpen, idFromHalfPage, headerFromHalfPage }: Direc
     );
 
     useEffect(() => {
-        console.log('@@dd isLoading', isLoading);
-        console.log('@@dd directoryExists', directoryExists);
         if (isLoading === false && directoryExists === false) {
             dispatch(
                 setErrorModalOpen({
@@ -75,19 +75,31 @@ const Directory = ({ halfPageIsOpen, idFromHalfPage, headerFromHalfPage }: Direc
             setLocalRows([...localRows, newRowWithId]);
             return createDirectory(newRow(), tempId);
         },
-        onSuccess: async(data) => {
-            const createdRowWithId: RowWithTmpId = { ...data.directory, _id: data.directory._id, tmp_id: data.tmp_id };
+        onSuccess: async (data) => {
+            const createdRowWithId: RowWithTmpId = {
+                ...data.directory,
+                _id: data.directory._id,
+                tmp_id: data.tmp_id,
+            };
             const haveRowWithTmpId = localRows.some((row) => row.tmp_id === data.tmp_id);
 
             if (currentPage === Page.Sections) {
-                await createResume(data.directory._id);
-                await createNote(data.directory._id);
+                await Promise.all([
+                    createResume(data.directory._id),
+                    createNote(data.directory._id),
+                    createDefaultPage(data.directory._id),
+                ]);
             }
 
             if (haveRowWithTmpId) {
                 setLocalRows(
                     localRows.map((row) => (row.tmp_id === data.tmp_id ? createdRowWithId : row)),
                 );
+            }
+
+            if (global.recorder.isOpen) {
+                queryClient.invalidateQueries({ queryKey: ['load-courses'] });
+                queryClient.invalidateQueries({ queryKey: ['load-chapters'] });
             }
         },
         onError: (error) => {
@@ -100,7 +112,7 @@ const Directory = ({ halfPageIsOpen, idFromHalfPage, headerFromHalfPage }: Direc
     });
 
     const handleCreateRow = () => {
-        tempId.current = Math.random().toString(36).substring(2, 15);
+        tempId.current = getTmpId();
         createDirectoryMutation.mutate(tempId.current);
     };
 
@@ -138,9 +150,7 @@ const Directory = ({ halfPageIsOpen, idFromHalfPage, headerFromHalfPage }: Direc
                         <Rows
                             currentPage={currentPage as Page}
                             headerTitle={`All ${
-                                headerFromHalfPage
-                                    ? (global.page.next.title as Page)
-                                    : currentPage
+                                headerFromHalfPage ? (global.page.next.title as Page) : currentPage
                             }`}
                             rowsData={localRows}
                             localHalfPageIsOpen={!!halfPageIsOpen}

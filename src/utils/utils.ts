@@ -124,3 +124,7 @@ export const getCurrentPageFromURL = (pathname: string): Page => {
             return Page.Dashboard;
     }
 };
+
+export const getTmpId = () => {
+    return Math.random().toString(36).substring(2, 15);
+};

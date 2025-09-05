@@ -9,6 +9,8 @@ import ZoomInMapIcon from '@mui/icons-material/ZoomInMap';
 import { ToolsState } from '../../components/atoms/Tools';
 import { getCapitalizeCase } from '../../utils/utils';
 import { Page as PageEnum } from '../../interface.global';
+import { faFileLines, faTrash, faX, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 interface PageProps {
     sectionName: string;
@@ -27,6 +29,7 @@ const Page = ({
     setPageIsZoomed,
     handleAriaChange,
 }: PageProps) => {
+    console.log('@@Front - ariaValue:', ariaValue);
     return (
         <Stack
             display={'flex'}
@@ -46,7 +49,7 @@ const Page = ({
                         <H4 sx={{ fontWeight: '600' }}>
                             {getCapitalizeCase(tools.view.value)}{' '}
                             {tools.view.value === View.Pages
-                                ? `${tools.pageIndex.value + 1}`
+                                ? `${tools.page.index.value + 1}`
                                 : ''}{' '}
                         </H4>
                         <Text sx={{ color: (th) => th.palette.grey['600'] }}>{sectionName}</Text>
@@ -77,13 +80,33 @@ const Page = ({
                                 />
                             )}
                         </CustomBtn>
+                        <CustomBtn
+                            sx={{
+                                minWidth: '20px',
+                                minHeight: '20px',
+                                backgroundColor: (th) => th.palette.background.default,
+                                display: 'flex',
+                                flexDirection: 'row',
+                                gap: 1,
+                                borderRadius: '50%',
+                            }}
+                            onClick={() => tools.page.remove(tools.page.index.id)}
+                        >
+                            {' '}
+                            <FontAwesomeIcon
+                                icon={faXmark}
+                                style={{
+                                    color: '#EFEFEF',
+                                }}
+                            />
+                        </CustomBtn>
                     </Stack>
                 </Stack>
             </Stack>
 
             <Textarea
                 onChange={handleAriaChange}
-                value={ariaValue}
+                value={ariaValue || ''}
                 sx={{
                     flex: 1,
                     padding: 2,

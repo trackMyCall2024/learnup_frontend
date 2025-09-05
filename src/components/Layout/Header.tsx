@@ -5,7 +5,7 @@ import { directorySelector, globalSelector, State, userSelector } from '../../st
 import { GlobalState, setIsHalfPageIsOpen } from '../../store/global';
 import { Page } from '../../interface.global';
 import { getCapitalizeCase } from '../../utils/utils';
-import { faAnglesLeft, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
+import { faAnglesLeft, faExpand, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
 import { usePage } from '../../hooks/usePage';
 import { setModalOpen } from '../../store/recordManager';
 import BtnExpandNavbar from '../atoms/BtnExpandNavbar';
@@ -108,7 +108,7 @@ const Header = ({ titleFromHalfPage, isHalfPageIsOpen }: HeaderProps) => {
                     variant="contained"
                     startIcon={
                         <FontAwesomeIcon
-                            icon={faAnglesLeft}
+                            icon={faExpand}
                             size="sm"
                             style={{
                                 marginRight: '0px',

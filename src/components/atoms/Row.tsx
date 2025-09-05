@@ -12,6 +12,7 @@ import { useCallback, useState, useRef } from 'react';
 import { updateDirectory } from '../../protocol/api';
 import { RowWithTmpId } from '../../Page/Course/Directory';
 import { usePage } from '../../hooks/usePage';
+import { useQueryClient } from '@tanstack/react-query';
 
 export enum RowType {
     History = 'history',
@@ -33,7 +34,7 @@ export enum HistoryType {
 const Row = ({ rowType, row, localHalfPageIsOpen }: RowProps) => {
     const global = useSelector<State, GlobalState>(globalSelector);
     const { currentPage } = usePage();
-
+    const queryClient = useQueryClient();
     const [text, setText] = useState(row.name);
     const textFieldRef = useRef<HTMLInputElement>(null);
 
@@ -45,6 +46,10 @@ const Row = ({ rowType, row, localHalfPageIsOpen }: RowProps) => {
                 logo: row.logo,
                 type: row.type,
             });
+            if (global.recorder.isOpen) {
+                queryClient.invalidateQueries({ queryKey: ['load-courses'] });
+                queryClient.invalidateQueries({ queryKey: ['load-chapters'] });
+            }
         }, 500), // 500ms après la dernière frappe
         [row._id, row.parentID, row.logo, row.type],
     );

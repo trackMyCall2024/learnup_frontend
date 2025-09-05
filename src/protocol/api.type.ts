@@ -63,3 +63,9 @@ export interface NoteRequest {
     section: string;
     data: string;
 }
+
+export interface PageRequest {
+    _id: string;
+    section: string;
+    data: string;
+}

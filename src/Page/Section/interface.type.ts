@@ -6,6 +6,8 @@ export enum UserSection {
 }
 
 export interface Page extends MongoDBObjectId {
+    tmp_id?: string;
+    section: string;
     title: string;
     data: string;
 }
@@ -16,6 +18,7 @@ export interface ChatMessage {
 }
 
 export interface SectionProps {
+    tmp_id?: string;
     _id: string;
     parentId: string;
     name: string;

@@ -9,11 +9,6 @@ import { State } from '../../store/selector';
 import {
     setSelectedCourseId,
     setSelectedChapterId,
-    setCourses,
-    setChapters,
-    setLoadingCourses,
-    setLoadingChapters,
-    resetRecordManager,
     RecordManagerState,
 } from '../../store/recordManager';
 import { createDirectory, createNote, createResume, getRows } from '../../protocol/api';
@@ -22,6 +17,7 @@ import { DirectoryType } from '../../Page/Course/interface.directory';
 import { recordManagerSelector } from '../../store/selector';
 import { useAudioRecorder, RecorderState } from '../../hooks/useAudioRecorder';
 import { EllipsisText } from '../atoms/Typography';
+import { useQuery } from '@tanstack/react-query';
 
 const Recorder = () => {
     const INTERVAL_TIME = 1 * 60 * 1000;
@@ -31,8 +27,8 @@ const Recorder = () => {
         selectedChapterId,
         courses,
         chapters,
-        isLoadingCourses,
-        isLoadingChapters,
+        // isLoadingCourses,
+        // isLoadingChapters,
     } = useSelector<State, RecordManagerState>(recordManagerSelector);
 
     const user = useSelector((state: State) => state.user);
@@ -60,51 +56,27 @@ const Recorder = () => {
 
     const isOpen = global.recorder.isOpen;
 
-    // Load courses and chapters on component mount
-    useEffect(() => {
-        if (isOpen && user._id) {
-            loadCourses();
-        }
-        if (selectedCourseId) {
-            loadChapters(selectedCourseId);
-        }
-    }, [isOpen, user._id, selectedCourseId]);
+    const { data: coursesData, isLoading: isLoadingCourses } = useQuery({
+        queryKey: ['load-courses'],
+        queryFn: () =>
+            getRows(DirectoryType.Course, user._id, '', pagination.page, pagination.limit),
+        enabled: isOpen && !!user._id,
+        retry: false,
+    });
 
-    const loadCourses = async () => {
-        try {
-            dispatch(setLoadingCourses(true));
-            const coursesData = await getRows(
-                DirectoryType.Course,
-                user._id,
-                '',
-                pagination.page,
-                pagination.limit,
-            );
-            dispatch(setCourses(coursesData as Row[]));
-        } catch (error) {
-            console.error('Error loading courses:', error);
-        } finally {
-            dispatch(setLoadingCourses(false));
-        }
-    };
-
-    const loadChapters = async (courseId: string) => {
-        try {
-            dispatch(setLoadingChapters(true));
-            const chaptersData = await getRows(
+    const { data: chaptersData, isLoading: isLoadingChapters } = useQuery({
+        queryKey: ['load-chapters'],
+        queryFn: () =>
+            getRows(
                 DirectoryType.Chapter,
-                courseId,
+                selectedCourseId as string,
                 '',
                 pagination.page,
                 pagination.limit,
-            );
-            dispatch(setChapters(chaptersData as Row[]));
-        } catch (error) {
-            console.error('Error loading chapters:', error);
-        } finally {
-            dispatch(setLoadingChapters(false));
-        }
-    };
+            ),
+        enabled: isOpen && !!selectedCourseId,
+        retry: false,
+    });
 
     const handleCourseChange = (courseId: string) => {
         dispatch(setSelectedCourseId(courseId));
@@ -221,7 +193,7 @@ const Recorder = () => {
                     border: 'none',
                     '&:hover': {
                         backgroundColor: (th) => th.palette.grey?.[800],
-                    }
+                    },
                 }}
                 placeholder={`select a ${dataType}...`}
                 startDecorator={<FontAwesomeIcon icon={icon} fontSize="small" color="#919190" />}
@@ -254,7 +226,7 @@ const Recorder = () => {
             position="fixed"
             padding={2}
             bottom={0}
-            mb={3}
+            mb={6}
             borderRadius={2}
             left="50%"
             zIndex={1000}
@@ -286,7 +258,7 @@ const Recorder = () => {
             <Stack flexDirection={'row'} gap={2} height={'auto'} alignItems={'center'}>
                 {getSelect(
                     selectedCourseId || '',
-                    courses,
+                    coursesData || [],
                     isLoadingCourses,
                     'course',
                     faBook,
@@ -294,7 +266,7 @@ const Recorder = () => {
                 )}
                 {getSelect(
                     selectedChapterId || '',
-                    chapters,
+                    chaptersData || [],
                     !selectedCourseId || isLoadingChapters,
                     'chapter',
                     faBook,
