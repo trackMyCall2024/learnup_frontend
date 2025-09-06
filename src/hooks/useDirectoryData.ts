@@ -38,7 +38,7 @@ export const useDirectoryData = (
             pagination.page,
             pagination.limit,
             location.pathname,
-            currentPage,
+            getCurrentPageFromURL(location.pathname),
         ],
         queryFn: () =>
             getRows(

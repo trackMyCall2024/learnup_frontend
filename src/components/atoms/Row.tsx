@@ -100,6 +100,16 @@ const Row = ({ rowType, row, localHalfPageIsOpen }: RowProps) => {
                     variant="standard"
                     value={text}
                     onChange={(e) => handleUpdateTextRow(e.target.value)}
+                    // if you click to enter , stop the event stop focus
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            // Force le blur de l'élément actuellement focusé
+                            if (document.activeElement instanceof HTMLElement) {
+                                document.activeElement.blur();
+                            }
+                        }
+                    }}
                     autoFocus={!!(row as RowWithTmpId).tmp_id}
                     sx={{
                         flex: 1,

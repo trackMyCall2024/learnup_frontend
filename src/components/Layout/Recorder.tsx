@@ -20,7 +20,7 @@ import { EllipsisText } from '../atoms/Typography';
 import { useQuery } from '@tanstack/react-query';
 
 const Recorder = () => {
-    const INTERVAL_TIME = 1 * 60 * 1000;
+    const INTERVAL_TIME = 5 * 60 * 1000;
     const dispatch = useDispatch();
     const {
         selectedCourseId,
@@ -33,7 +33,6 @@ const Recorder = () => {
 
     const user = useSelector((state: State) => state.user);
     const [pagination, setPagination] = useState({ page: 1, limit: 10 });
-    const [sectionId, setSectionId] = useState<string | null>(null);
 
     // Audio recorder hook
     const {
@@ -45,6 +44,8 @@ const Recorder = () => {
         clearRecorder,
         setIsStopped,
         releaseMicrophone,
+        setSectionId,
+        sectionId,
     } = useAudioRecorder({});
 
     const isRecording = recorderState === RecorderState.Recording;
@@ -57,15 +58,14 @@ const Recorder = () => {
     const isOpen = global.recorder.isOpen;
 
     const { data: coursesData, isLoading: isLoadingCourses } = useQuery({
-        queryKey: ['load-courses'],
+        queryKey: ['load-courses', user._id],
         queryFn: () =>
             getRows(DirectoryType.Course, user._id, '', pagination.page, pagination.limit),
         enabled: isOpen && !!user._id,
-        retry: false,
     });
 
     const { data: chaptersData, isLoading: isLoadingChapters } = useQuery({
-        queryKey: ['load-chapters'],
+        queryKey: ['load-chapters', selectedCourseId],
         queryFn: () =>
             getRows(
                 DirectoryType.Chapter,
@@ -75,7 +75,6 @@ const Recorder = () => {
                 pagination.limit,
             ),
         enabled: isOpen && !!selectedCourseId,
-        retry: false,
     });
 
     const handleCourseChange = (courseId: string) => {
@@ -86,15 +85,8 @@ const Recorder = () => {
         dispatch(setSelectedChapterId(chapterId));
     };
 
-    const handleStartRecord = async (sectionId: string) => {
-        await createResume(sectionId);
-        await createNote(sectionId);
-        startRecording({ sectionId });
-        console.log('@@starting recording with sectionId:', sectionId);
-    };
-
-    const handleStopRecord = () => {
-        stopRecording();
+    const handleStopRecord = (isLastPage: boolean) => {
+        stopRecording({ isLastPage });
         console.log('@@stopping recording');
     };
 
@@ -104,20 +96,22 @@ const Recorder = () => {
             setState(RecorderState.Recording);
 
             if (sectionIdToUse) {
-                handleStartRecord(sectionIdToUse);
+                // RESTART RECORDING IF STOPPED
+                startRecording({ sectionId: sectionIdToUse });
                 return;
-            } else {
-                const section = await createDirectory({
-                    parentID: selectedChapterId || '',
-                    name: 'new lesson',
-                    logo: 'logo',
-                    type: DirectoryType.Section,
-                });
-                sectionIdToUse = section.directory._id;
             }
+            const section = await createDirectory({
+                parentID: selectedChapterId || '',
+                name: 'new lesson',
+                logo: 'logo',
+                type: DirectoryType.Section,
+            });
+            sectionIdToUse = section.directory._id;
+            await createResume(sectionIdToUse);
+            await createNote(sectionIdToUse);
 
             setSectionId(sectionIdToUse);
-            handleStartRecord(sectionIdToUse);
+            startRecording({ sectionId: sectionIdToUse });
         } catch (error) {
             console.error('Error creating section:', error);
             setState(RecorderState.Idle);
@@ -133,7 +127,7 @@ const Recorder = () => {
             console.log('@@starting interval');
             interval = setInterval(() => {
                 if (isRecording && !isStopped) {
-                    handleStopRecord();
+                    handleStopRecord(false);
                 }
             }, INTERVAL_TIME);
         }
@@ -163,13 +157,9 @@ const Recorder = () => {
         if (canStartRecording) {
             handleLesson();
         } else if (canStopRecording) {
-            setState(RecorderState.Stopped);
+            handleStopRecord(true);
         }
     };
-
-    const selectWidth = document.getElementById(`select-course`)?.clientWidth;
-
-    console.log('@@selectWidth', selectWidth);
 
     const getSelect = (
         selectedId: string,
@@ -184,7 +174,7 @@ const Recorder = () => {
                 id={`select-${dataType}`}
                 value={selectedId || ''}
                 onChange={(event, value) => handleChange(value || '')}
-                // disabled={disabled}
+                disabled={isRecording}
                 sx={{
                     flex: 1,
                     backgroundColor: (th) => th.palette.grey?.[700],
@@ -209,7 +199,7 @@ const Recorder = () => {
                             fontSize: '12px',
                             minHeight: '35px',
                             maxHeight: '35px',
-                            // maxWidth: `${selectWidth}px`,
+                            maxWidth: `235px`,
                         }}
                     >
                         <EllipsisText>{item.name}</EllipsisText>

@@ -21,6 +21,7 @@ export const useAudioRecorder = ({
     const [state, setState] = useState<RecorderState>(RecorderState.Idle);
     const [stepRecorder, setStepRecorder] = useState<number>(stepRecorderFromLocalStorage || 0);
     const [isStopped, setIsStopped] = useState<boolean>(false);
+    const isLastPageRef = useRef<boolean>(false);
 
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const chunksRef = useRef<BlobPart[]>([]);
@@ -54,6 +55,10 @@ export const useAudioRecorder = ({
                 tmp_file_id: createTempFileRes.fileId,
                 is_last_page: isLastPage,
             });
+
+            if (isLastPage) {
+                setSectionId('');
+            }
         },
         onSuccess: (data) => {
             console.log('Transcription démarrée en arrière-plan');
@@ -101,8 +106,11 @@ export const useAudioRecorder = ({
                 };
 
                 mediaRecorder.onstop = () => {
-                    setIsStopped(true);
-                    sendCurrentAudio({ isLastPage: true });
+                    console.log('@@onstop');
+                    sendCurrentAudio({ isLastPage: isLastPageRef.current });
+                    if (!isLastPageRef.current) {
+                        setIsStopped(true);
+                    }
                     setStepRecorder(0);
                 };
 
@@ -117,10 +125,12 @@ export const useAudioRecorder = ({
         [state, sendCurrentAudio],
     );
 
-    const stopRecording = useCallback(() => {
+    const stopRecording = useCallback(({ isLastPage }: { isLastPage?: boolean }) => {
         if (!mediaRecorderRef.current) {
             return;
         }
+
+        isLastPageRef.current = isLastPage || false;
 
         mediaRecorderRef.current.stop();
         mediaRecorderRef.current.stream.getTracks().forEach((t) => t.stop());
@@ -171,5 +181,7 @@ export const useAudioRecorder = ({
         setState,
         clearRecorder,
         releaseMicrophone,
+        sectionId,
+        setSectionId,
     };
 };
